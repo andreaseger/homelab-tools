@@ -1,0 +1,78 @@
+name: Build and Push Containers
+
+on:
+  push:
+    branches:
+      - main
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Get affected apps with container target
+        id: affected
+        run: |
+          APPS=$(bun nx show projects --affected --withTarget container --json 2>/dev/null || echo "[]")
+          echo "apps=$APPS" >> $GITHUB_OUTPUT
+
+      - name: Set up QEMU
+        if: steps.affected.outputs.apps != '[]'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        if: steps.affected.outputs.apps != '[]'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        if: steps.affected.outputs.apps != '[]'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push affected apps
+        if: steps.affected.outputs.apps != '[]'
+        run: |
+          echo "${{ steps.affected.outputs.apps }}" | jq -r '.[]' | while read app; do
+            echo "Building $app..."
+            
+            # Get version from package.json
+            VERSION=$(node -p "require('./${app}/package.json').version")
+            
+            # Get app name (strip apps/ prefix if present)
+            APP_NAME=$(basename $app)
+            
+            # Build and push for each platform
+            docker build \
+              --build-arg VERSION=$VERSION \
+              --build-arg COMMIT_SHA=${{ github.sha }} \
+              --platform linux/amd64,linux/arm64 \
+              --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${APP_NAME}:$VERSION \
+              --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${APP_NAME}:${{ github.sha }} \
+              --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${APP_NAME}:latest \
+              --push \
+              $app
+          done

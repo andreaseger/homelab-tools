@@ -1,0 +1,20 @@
+{
+  "name": "@apps/obsidian-syncer",
+  "version": "0.0.1",
+  "description": "Headless Obsidian vault sync for Kubernetes CronJobs",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun run index.ts"
+  },
+  "dependencies": {
+    "obsidian-headless": "^0.0.3"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
