@@ -29,8 +29,11 @@ bun nx graph
 # Type check all projects
 bun nx run-many -t typecheck
 
-# Build container images
-bun nx run <app>:container
+# Build container images locally
+bun nx run <app>:docker:build:local
+
+# Build and push to registry (CI configuration)
+bun nx run <app>:docker:build:ci
 
 # Run tests
 bun nx run-many -t test
@@ -41,10 +44,18 @@ bun nx run-many -t lint
 
 ## CI/CD
 
-The workspace uses GitHub Actions for continuous integration. Container images are automatically built and pushed to GitHub Container Registry on every push to `main`.
+The workspace uses GitHub Actions for continuous integration with **Nx affected detection**.
 
-- CI Pipeline: `.github/workflows/ci.yml`
-- Container Builds: `.github/workflows/container-build.yml`
+- **CI Pipeline**: `.github/workflows/ci.yml` - Runs tests and linting on affected projects
+- **Container Builds**: `.github/workflows/container-build.yml` - Builds and pushes only affected Docker images
+
+### How Affected Detection Works
+
+The workflows use [`nrwl/nx-set-shas`](https://github.com/nrwl/nx-set-shas) to track the last successful build on `main`. This ensures:
+
+- Only changed projects are built and tested
+- Efficient CI runs as your monorepo grows
+- No unnecessary container image builds
 
 ## Development
 

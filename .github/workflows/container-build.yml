@@ -28,6 +28,9 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Set SHAs for affected detection
+        uses: nrwl/nx-set-shas@v4
+
       - name: Get affected apps with docker:build target
         id: affected
         run: |
