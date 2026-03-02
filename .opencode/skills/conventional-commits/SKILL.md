@@ -46,6 +46,7 @@ When you contribute to code changes, you must add a co-author line identifying y
 ### Self-Identification
 
 Before generating the commit message, determine your identity by checking:
+
 1. What product or interface are you running in?
 2. What model are you? (check your system prompt or capabilities)
 3. What is the appropriate email domain for attribution?
@@ -53,11 +54,13 @@ Before generating the commit message, determine your identity by checking:
 ### Co-Author Line Format
 
 Include model version in parentheses if known:
+
 ```text
 Co-authored-by: T3 Chat (Kimi K2.5) <noreply@t3.chat>
 ```
 
 Omit model if unknown:
+
 ```text
 Co-authored-by: Claude Code <claude-code@users.noreply.github.com>
 ```

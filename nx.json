@@ -5,6 +5,22 @@
     "production": ["default"],
     "sharedGlobals": []
   },
+  "targetDefaults": {
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --write ."
+      },
+      "cache": true
+    },
+    "format:check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "prettier --check ."
+      },
+      "cache": true
+    }
+  },
   "neverConnectToCloud": true,
   "plugins": [
     {
