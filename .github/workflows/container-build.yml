@@ -64,7 +64,9 @@ jobs:
       - name: Build and push affected apps
         if: steps.affected.outputs.apps != '[]'
         run: |
-          echo "${{ steps.affected.outputs.apps }}" | jq -r '.[]' | while read app; do
+          set -e
+          apps=$(echo '${{ steps.affected.outputs.apps }}' | jq -r '.[]')
+          for app in $apps; do
             echo "Building and pushing $app..."
-            bun nx run $app:docker:build:ci
+            bun nx run "$app:docker:build:ci"
           done
