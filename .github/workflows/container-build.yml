@@ -6,6 +6,7 @@ on:
       - main
 
 permissions:
+  actions: read
   contents: read
   packages: write
 
@@ -16,10 +17,15 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          filter: tree:0
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -30,6 +36,8 @@ jobs:
 
       - name: Set SHAs for affected detection
         uses: nrwl/nx-set-shas@v4
+        with:
+          gh-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get affected apps with docker:build target
         id: affected
