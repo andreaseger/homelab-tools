@@ -5,54 +5,16 @@
   "sourceRoot": "apps/obsidian-syncer",
   "tags": ["npm:private"],
   "targets": {
-    "build": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bun build index.ts",
-        "cwd": "apps/obsidian-syncer",
-        "outputs": ["{projectRoot}/dist"]
-      },
-      "cache": true
-    },
-    "serve": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bun --watch index.ts",
-        "cwd": "apps/obsidian-syncer"
-      },
-      "dependsOn": ["^build"]
-    },
-    "test": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bun test",
-        "cwd": "apps/obsidian-syncer"
-      },
-      "cache": true
+    "lint": {
+      "dependsOn": ["typecheck"]
     },
     "typecheck": {
-      "dependsOn": ["^typecheck"],
+      "executor": "nx:run-commands",
       "options": {
         "command": "bun tsc --noEmit",
         "cwd": "apps/obsidian-syncer"
       },
       "cache": true
-    },
-    "container": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "docker build -t ghcr.io/ane/homelab-tools/obsidian-syncer:local --build-arg VERSION=$(node -p \"require('./package.json').version\") .",
-        "cwd": "apps/obsidian-syncer"
-      },
-      "dependsOn": ["build"]
-    },
-    "container:push": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "docker push ghcr.io/ane/homelab-tools/obsidian-syncer:local",
-        "cwd": "apps/obsidian-syncer"
-      },
-      "dependsOn": ["container"]
     }
   }
 }

@@ -1,30 +1,52 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*",
-      "sharedGlobals"
-    ],
-    "production": [
-      "default"
-    ],
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "production": ["default"],
     "sharedGlobals": []
   },
+  "neverConnectToCloud": true,
   "plugins": [
     {
-      "plugin": "@nx/js/typescript",
+      "plugin": "@nx/docker",
       "options": {
-        "typecheck": {
-          "targetName": "typecheck"
-        },
-        "build": {
-          "targetName": "build",
-          "configName": "tsconfig.lib.json",
-          "buildDepsName": "build-deps",
-          "watchDepsName": "watch-deps"
+        "buildTarget": {
+          "name": "docker:build",
+          "configurations": {
+            "local": {
+              "env": {
+                "DOCKER_BUILDKIT": "1"
+              }
+            },
+            "ci": {
+              "args": [
+                "--platform",
+                "linux/amd64,linux/arm64",
+                "--label",
+                "org.opencontainers.image.title={projectName}",
+                "--label",
+                "org.opencontainers.image.source={projectRoot}",
+                "--label",
+                "org.opencontainers.image.revision={commitSha}",
+                "--label",
+                "org.opencontainers.image.created={currentDate}",
+                "--tag",
+                "ghcr.io/andreaseger/{projectName}:latest",
+                "--tag",
+                "ghcr.io/andreaseger/{projectName}:{shortCommitSha}",
+                "--tag",
+                "ghcr.io/andreaseger/{projectName}:{currentDate|YYYY-MM-DD}",
+                "--tag",
+                "ghcr.io/andreaseger/{projectName}:{currentDate|YYMMDDSS}.{shortCommitSha}",
+                "--push"
+              ],
+              "env": {
+                "DOCKER_BUILDKIT": "1"
+              }
+            }
+          }
         }
       }
     }
-  ],
-  "neverConnectToCloud": true
+  ]
 }

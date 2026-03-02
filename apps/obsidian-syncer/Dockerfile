@@ -1,4 +1,20 @@
-FROM oven/bun:1-debian-bookworm
+FROM oven/bun:1 AS builder
+
+# Install build dependencies for native modules (better-sqlite3)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy package.json and install dependencies
+COPY package.json ./
+RUN bun install --production
+
+# Final runtime stage
+FROM oven/bun:1
 
 ARG VERSION=dev
 ARG COMMIT_SHA=unknown
@@ -8,19 +24,21 @@ LABEL org.opencontainers.image.description="Headless Obsidian vault sync"
 LABEL org.opencontainers.image.version="${VERSION}"
 LABEL org.opencontainers.image.revision="${COMMIT_SHA}"
 
+# Install runtime dependencies (needed for HTTPS connections to Obsidian Sync)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
-    curl \
-    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY apps/obsidian-syncer/package*.json ./
-RUN bun add -g obsidian-headless
+# Copy dependencies from builder (includes compiled better-sqlite3)
+COPY --from=builder /app/node_modules ./node_modules
 
-COPY apps/obsidian-syncer/index.ts ./
+# Copy application code
+COPY index.ts ./
 
-RUN mv /usr/local/bin/ob /usr/local/bin/ob-headless || true
+# Create symlink for ob command
+RUN ln -s /app/node_modules/.bin/ob /usr/local/bin/ob || \
+    find /app/node_modules -name "ob" -executable -type f -exec ln -s {} /usr/local/bin/ob \; || true
 
-ENTRYPOINT ["bun", "run", "/app/index.ts"]
+ENTRYPOINT ["bun", "run", "index.ts"]

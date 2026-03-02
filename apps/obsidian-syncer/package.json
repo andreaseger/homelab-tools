@@ -11,9 +11,6 @@
   "dependencies": {
     "obsidian-headless": "^0.0.3"
   },
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
   "peerDependencies": {
     "typescript": "^5"
   }

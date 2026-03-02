@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-  release:
-    types:
-      - published
 
 permissions:
   contents: read
@@ -14,7 +11,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  OWNER: ${{ github.repository_owner }}
 
 jobs:
   build-and-push:
@@ -24,17 +21,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: 20
+          bun-version: latest
 
       - name: Install dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
 
-      - name: Get affected apps with container target
+      - name: Get affected apps with docker:build target
         id: affected
         run: |
-          APPS=$(bun nx show projects --affected --withTarget container --json 2>/dev/null || echo "[]")
+          APPS=$(bun nx show projects --affected --withTarget docker:build --json 2>/dev/null || echo "[]")
           echo "apps=$APPS" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
@@ -57,22 +54,6 @@ jobs:
         if: steps.affected.outputs.apps != '[]'
         run: |
           echo "${{ steps.affected.outputs.apps }}" | jq -r '.[]' | while read app; do
-            echo "Building $app..."
-            
-            # Get version from package.json
-            VERSION=$(node -p "require('./${app}/package.json').version")
-            
-            # Get app name (strip apps/ prefix if present)
-            APP_NAME=$(basename $app)
-            
-            # Build and push for each platform
-            docker build \
-              --build-arg VERSION=$VERSION \
-              --build-arg COMMIT_SHA=${{ github.sha }} \
-              --platform linux/amd64,linux/arm64 \
-              --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${APP_NAME}:$VERSION \
-              --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${APP_NAME}:${{ github.sha }} \
-              --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${APP_NAME}:latest \
-              --push \
-              $app
+            echo "Building and pushing $app..."
+            bun nx run $app:docker:build:ci
           done
