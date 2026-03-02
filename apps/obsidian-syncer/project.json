@@ -5,6 +5,13 @@
   "sourceRoot": "apps/obsidian-syncer",
   "tags": ["npm:private"],
   "targets": {
+    "docker:build": {
+      "configurations": {
+        "ci": {
+          "command": "docker buildx build ."
+        }
+      }
+    },
     "lint": {
       "dependsOn": ["typecheck"]
     },
