@@ -5,62 +5,13 @@
     "production": ["default"],
     "sharedGlobals": []
   },
-  "targetDefaults": {
-    "format": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "prettier --write ."
-      },
-      "cache": true
-    },
-    "format:check": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "prettier --check ."
-      },
-      "cache": true
-    }
-  },
   "neverConnectToCloud": true,
   "plugins": [
     {
       "plugin": "@nx/docker",
       "options": {
         "buildTarget": {
-          "name": "docker:build",
-          "configurations": {
-            "local": {
-              "env": {
-                "DOCKER_BUILDKIT": "1"
-              }
-            },
-            "ci": {
-              "args": [
-                "--platform",
-                "linux/amd64,linux/arm64",
-                "--label",
-                "org.opencontainers.image.title={projectName}",
-                "--label",
-                "org.opencontainers.image.source={projectRoot}",
-                "--label",
-                "org.opencontainers.image.revision={commitSha}",
-                "--label",
-                "org.opencontainers.image.created={currentDate}",
-                "--tag",
-                "ghcr.io/andreaseger/{projectName}:latest",
-                "--tag",
-                "ghcr.io/andreaseger/{projectName}:{shortCommitSha}",
-                "--tag",
-                "ghcr.io/andreaseger/{projectName}:{currentDate|YYYY-MM-DD}",
-                "--tag",
-                "ghcr.io/andreaseger/{projectName}:{currentDate|YYMMDDSS}.{shortCommitSha}",
-                "--push"
-              ],
-              "env": {
-                "DOCKER_BUILDKIT": "1"
-              }
-            }
-          }
+          "name": "docker:build"
         }
       }
     }

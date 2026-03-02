@@ -9,20 +9,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Copy package.json and install dependencies
-COPY package.json ./
-RUN bun install --production
+# Replicate workspace structure for lockfile compatibility
+COPY package.json bun.lock ./
+COPY apps/obsidian-syncer/package.json apps/obsidian-syncer/
+RUN bun install --frozen-lockfile --production
 
 # Final runtime stage
 FROM oven/bun:1
 
-ARG VERSION=dev
-ARG COMMIT_SHA=unknown
-
 LABEL org.opencontainers.image.source="https://github.com/ane/homelab-tools"
 LABEL org.opencontainers.image.description="Headless Obsidian vault sync"
-LABEL org.opencontainers.image.version="${VERSION}"
-LABEL org.opencontainers.image.revision="${COMMIT_SHA}"
 
 # Install runtime dependencies (needed for HTTPS connections to Obsidian Sync)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -32,10 +28,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Copy dependencies from builder (includes compiled better-sqlite3)
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/obsidian-syncer/node_modules ./node_modules
 
 # Copy application code
-COPY index.ts ./
+COPY apps/obsidian-syncer/index.ts ./
 
 # Create symlink for ob command
 RUN ln -s /app/node_modules/.bin/ob /usr/local/bin/ob || \
