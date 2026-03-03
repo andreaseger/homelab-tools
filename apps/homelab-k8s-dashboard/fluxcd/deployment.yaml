@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-dashboard
+  labels:
+    app.kubernetes.io/name: k8s-dashboard
+    app.kubernetes.io/instance: k8s-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: k8s-dashboard
+      app.kubernetes.io/instance: k8s-dashboard
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: k8s-dashboard
+        app.kubernetes.io/instance: k8s-dashboard
+    spec:
+      serviceAccountName: k8s-dashboard
+      containers:
+        - name: k8s-dashboard
+          image: ghcr.io/andreaseger/homelab-k8s-dashboard:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: 'production'
+            - name: EXCLUDED_NAMESPACES
+              value: 'kube-system'
+            - name: CACHE_TTL
+              value: '300'
+            - name: PORT
+              value: '8080'
+            - name: VITE_HOST
+              value: '0.0.0.0'
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          resources:
+            limits:
+              cpu: 500m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8s-dashboard
+  labels:
+    app.kubernetes.io/name: k8s-dashboard
+    app.kubernetes.io/instance: k8s-dashboard
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: k8s-dashboard
+    app.kubernetes.io/instance: k8s-dashboard

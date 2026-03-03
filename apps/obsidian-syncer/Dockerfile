@@ -34,7 +34,7 @@ WORKDIR /app
 COPY --from=deps /deploy/node_modules ./node_modules
 
 # Copy application code
-COPY apps/obsidian-syncer/index.ts ./
+COPY index.ts ./
 
 # Create symlink for ob command
 RUN ln -s /app/node_modules/.bin/ob /usr/local/bin/ob || \
