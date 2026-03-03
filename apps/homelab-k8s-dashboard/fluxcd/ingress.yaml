@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: k8s-dashboard
+  labels:
+    app.kubernetes.io/name: k8s-dashboard
+  annotations:
+    gethomepage.dev/enabled: 'true'
+    gethomepage.dev/name: 'K8s Dashboard'
+    gethomepage.dev/description: 'View deployed containers and Helm charts'
+    gethomepage.dev/icon: 'sh-kubernetes.svg'
+    gethomepage.dev/group: 'infra'
+spec:
+  rules:
+    - host: k8s-dashboard.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: k8s-dashboard
+                port:
+                  number: 8080

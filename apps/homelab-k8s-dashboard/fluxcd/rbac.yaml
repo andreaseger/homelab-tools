@@ -1,0 +1,33 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: k8s-dashboard
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: k8s-dashboard-reader
+rules:
+  - apiGroups: ['']
+    resources: ['pods']
+    verbs: ['get', 'list', 'watch']
+  - apiGroups: ['image.toolkit.fluxcd.io']
+    resources: ['imagepolicies']
+    verbs: ['get', 'list', 'watch']
+  - apiGroups: ['source.toolkit.fluxcd.io']
+    resources: ['helmrepositories', 'helmcharts']
+    verbs: ['get', 'list', 'watch']
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: k8s-dashboard-reader-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: k8s-dashboard-reader
+subjects:
+  - kind: ServiceAccount
+    name: k8s-dashboard
+    namespace: k8s-dashboard

@@ -9,9 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Replicate workspace structure for lockfile compatibility
 COPY package.json bun.lock ./
-COPY apps/obsidian-syncer/package.json apps/obsidian-syncer/
 RUN bun install --frozen-lockfile --production
 
 # Final runtime stage
@@ -28,10 +26,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Copy dependencies from builder (includes compiled better-sqlite3)
-COPY --from=builder /app/apps/obsidian-syncer/node_modules ./node_modules
+COPY --from=builder /app/node_modules ./node_modules
 
 # Copy application code
-COPY apps/obsidian-syncer/index.ts ./
+COPY index.ts ./
 
 # Create symlink for ob command
 RUN ln -s /app/node_modules/.bin/ob /usr/local/bin/ob || \

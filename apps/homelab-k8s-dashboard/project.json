@@ -1,0 +1,43 @@
+{
+  "name": "homelab-k8s-dashboard",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/homelab-k8s-dashboard/src",
+  "tags": ["npm:private", "platform:amd64", "platform:arm64"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": ["rm -rf dist", "vue-tsc --build", "vite build"],
+        "cwd": "apps/homelab-k8s-dashboard",
+        "parallel": false
+      },
+      "cache": true,
+      "inputs": ["default", "^default"],
+      "outputs": ["{projectRoot}/dist"]
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun --watch src/server/server.ts",
+        "cwd": "apps/homelab-k8s-dashboard"
+      }
+    },
+    "docker:build": {
+      "options": {
+        "command": "docker build -t homelab-k8s-dashboard ."
+      }
+    },
+    "lint": {
+      "dependsOn": ["typecheck"]
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "vue-tsc --noEmit -p tsconfig.client.json && tsc --noEmit -p tsconfig.server.json && tsc --noEmit -p tsconfig.node.json",
+        "cwd": "apps/homelab-k8s-dashboard"
+      },
+      "cache": true
+    }
+  }
+}
