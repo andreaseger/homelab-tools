@@ -1,8 +1,8 @@
 {
-  "name": "api-portal",
+  "name": "api-portal-poc",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
-  "sourceRoot": "apps/api-portal/src",
+  "sourceRoot": "apps/api-portal-poc/src",
   "tags": ["npm:private", "platform:amd64", "platform:arm64"],
   "targets": {
     "dev": {
@@ -17,7 +17,7 @@
     },
     "docker:build": {
       "options": {
-        "command": "docker build -t api-portal -f apps/api-portal/Dockerfile .",
+        "command": "docker build -t api-portal -f apps/api-portal-poc/Dockerfile .",
         "cwd": "{projectRoot}"
       }
     },

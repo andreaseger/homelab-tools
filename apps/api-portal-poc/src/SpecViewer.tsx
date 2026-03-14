@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef } from 'react';
 
 interface SpecViewerProps {
   filename: string;
@@ -12,10 +12,10 @@ export function SpecViewer({ filename, specVersion }: SpecViewerProps) {
     if (!containerRef.current) return;
 
     // Clear any previous SwaggerUI instance
-    containerRef.current.innerHTML = "";
+    containerRef.current.innerHTML = '';
 
     const targetId = `swagger-ui-${Date.now()}`;
-    const target = document.createElement("div");
+    const target = document.createElement('div');
     target.id = targetId;
     containerRef.current.appendChild(target);
 
@@ -39,18 +39,18 @@ export function SpecViewer({ filename, specVersion }: SpecViewerProps) {
           SwaggerEditor.plugins.SwaggerUIAdapter,
           SwaggerUI.plugins.DownloadUrl,
         ],
-        layout: "StandaloneLayout",
+        layout: 'StandaloneLayout',
         deepLinking: true,
         defaultModelsExpandDepth: 1,
         defaultModelExpandDepth: 1,
-        docExpansion: "list",
+        docExpansion: 'list',
         filter: true,
         showExtensions: true,
         showCommonExtensions: true,
         tryItOutEnabled: false,
       });
     } catch (err) {
-      console.error("Failed to initialize SwaggerUI:", err);
+      console.error('Failed to initialize SwaggerUI:', err);
       if (containerRef.current) {
         containerRef.current.innerHTML = `
           <div style="padding: 2rem; color: #ef4444;">
@@ -64,15 +64,10 @@ export function SpecViewer({ filename, specVersion }: SpecViewerProps) {
     return () => {
       // Cleanup on unmount
       if (containerRef.current) {
-        containerRef.current.innerHTML = "";
+        containerRef.current.innerHTML = '';
       }
     };
   }, [filename, specVersion]);
 
-  return (
-    <div
-      ref={containerRef}
-      className="min-h-screen"
-    />
-  );
+  return <div ref={containerRef} className="min-h-screen" />;
 }

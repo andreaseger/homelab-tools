@@ -1,29 +1,32 @@
-import * as yaml from "js-yaml";
-import { readdir } from "node:fs/promises";
-import path from "node:path";
+import * as yaml from 'js-yaml';
+import { readdir } from 'node:fs/promises';
+import path from 'node:path';
 
 export interface SpecMeta {
   id: string;
   filename: string;
   title: string;
   version: string;
-  type: "openapi" | "asyncapi";
+  type: 'openapi' | 'asyncapi';
 }
 
-const SPEC_EXTENSIONS = new Set([".yaml", ".yml", ".json"]);
+const SPEC_EXTENSIONS = new Set(['.yaml', '.yml', '.json']);
 
 function detectSpecType(
-  content: Record<string, unknown>,
-): "openapi" | "asyncapi" | null {
-  if ("openapi" in content) return "openapi";
-  if ("asyncapi" in content) return "asyncapi";
+  content: Record<string, unknown>
+): 'openapi' | 'asyncapi' | null {
+  if ('openapi' in content) return 'openapi';
+  if ('asyncapi' in content) return 'asyncapi';
   return null;
 }
 
-function parseSpecContent(raw: string, filename: string): Record<string, unknown> | null {
+function parseSpecContent(
+  raw: string,
+  filename: string
+): Record<string, unknown> | null {
   try {
     const ext = path.extname(filename).toLowerCase();
-    if (ext === ".json") {
+    if (ext === '.json') {
       return JSON.parse(raw) as Record<string, unknown>;
     }
     return yaml.load(raw) as Record<string, unknown>;
@@ -62,10 +65,10 @@ export async function scanSpecs(dir: string): Promise<SpecMeta[]> {
 
       const info = content.info as Record<string, unknown> | undefined;
       specs.push({
-        id: filename.replace(/\.[^.]+$/, ""),
+        id: filename.replace(/\.[^.]+$/, ''),
         filename,
         title: (info?.title as string) ?? filename,
-        version: (info?.version as string) ?? "unknown",
+        version: (info?.version as string) ?? 'unknown',
         type,
       });
     } catch (err) {

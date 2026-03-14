@@ -1,4 +1,4 @@
-import type { SpecMeta } from "./App";
+import type { SpecMeta } from './App';
 
 interface SidebarProps {
   specs: SpecMeta[];
@@ -32,7 +32,7 @@ export function Sidebar({ specs, selectedFilename, onSelect }: SidebarProps) {
               API Portal
             </h1>
             <p className="text-slate-400 text-xs">
-              {specs.length} specification{specs.length !== 1 ? "s" : ""}
+              {specs.length} specification{specs.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
@@ -54,8 +54,8 @@ export function Sidebar({ specs, selectedFilename, onSelect }: SidebarProps) {
                     w-full text-left px-3 py-2.5 rounded-lg transition-all duration-150 group cursor-pointer
                     ${
                       isSelected
-                        ? "bg-white/10 text-white shadow-sm"
-                        : "text-slate-300 hover:bg-white/5 hover:text-white"
+                        ? 'bg-white/10 text-white shadow-sm'
+                        : 'text-slate-300 hover:bg-white/5 hover:text-white'
                     }
                   `}
                 >
@@ -64,13 +64,13 @@ export function Sidebar({ specs, selectedFilename, onSelect }: SidebarProps) {
                       className={`
                         inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider mt-0.5 flex-shrink-0
                         ${
-                          spec.type === "openapi"
-                            ? "bg-emerald-500/20 text-emerald-400"
-                            : "bg-violet-500/20 text-violet-400"
+                          spec.type === 'openapi'
+                            ? 'bg-emerald-500/20 text-emerald-400'
+                            : 'bg-violet-500/20 text-violet-400'
                         }
                       `}
                     >
-                      {spec.type === "openapi" ? "REST" : "Async"}
+                      {spec.type === 'openapi' ? 'REST' : 'Async'}
                     </span>
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate leading-tight">

@@ -1,14 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import "./index.css";
-import { Sidebar } from "./Sidebar";
-import { SpecViewer } from "./SpecViewer";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import './index.css';
+import { Sidebar } from './Sidebar';
+import { SpecViewer } from './SpecViewer';
 
 export interface SpecMeta {
   id: string;
   filename: string;
   title: string;
   version: string;
-  type: "openapi" | "asyncapi";
+  type: 'openapi' | 'asyncapi';
 }
 
 export function App() {
@@ -20,7 +20,7 @@ export function App() {
 
   const fetchSpecs = useCallback(async () => {
     try {
-      const res = await fetch("/api/specs");
+      const res = await fetch('/api/specs');
       const data: SpecMeta[] = await res.json();
       setSpecs(data);
       // Auto-select first if nothing selected
@@ -29,7 +29,7 @@ export function App() {
         return data[0]?.filename ?? null;
       });
     } catch (err) {
-      console.error("Failed to fetch specs:", err);
+      console.error('Failed to fetch specs:', err);
     } finally {
       setLoading(false);
     }
@@ -38,14 +38,14 @@ export function App() {
   // WebSocket for live reload
   useEffect(() => {
     function connect() {
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
       wsRef.current = ws;
 
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          if (data.type === "reload" || data.type === "connected") {
+          if (data.type === 'reload' || data.type === 'connected') {
             setSpecs(data.specs);
             setSpecVersion((v) => v + 1);
             setSelectedFilename((prev) => {
