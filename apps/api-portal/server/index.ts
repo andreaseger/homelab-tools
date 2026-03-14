@@ -1,6 +1,7 @@
 import { serve } from 'bun';
 import { watch } from 'node:fs';
 import path from 'node:path';
+import index from '../client/index.html';
 import { scanSpecs } from './specs';
 import type { SpecMeta } from './specs';
 
@@ -8,8 +9,12 @@ const SPECS_DIR = path.resolve(
   process.env.SPECS_DIR ?? path.join(import.meta.dir, '../../specs')
 );
 const PORT = parseInt(process.env.PORT ?? '3000', 10);
-const IS_PROD = process.env.NODE_ENV === 'production';
-const DIST_DIR = path.resolve(import.meta.dir, '../dist');
+
+// Resolve swagger-editor vendor files from node_modules
+const SWAGGER_EDITOR_DIR = path.resolve(
+  import.meta.dir,
+  '../node_modules/swagger-editor/dist'
+);
 
 console.log(`📁 Specs directory: ${SPECS_DIR}`);
 
@@ -72,6 +77,15 @@ setupFileWatcher();
 const server = serve({
   port: PORT,
   routes: {
+    '/*': index,
+
+    '/vendor/swagger-editor.js': new Response(
+      Bun.file(path.join(SWAGGER_EDITOR_DIR, 'umd/swagger-editor.js'))
+    ),
+    '/vendor/swagger-editor.css': new Response(
+      Bun.file(path.join(SWAGGER_EDITOR_DIR, 'swagger-editor.css'))
+    ),
+
     '/api/specs': {
       GET(_req) {
         return Response.json(cachedSpecs);
@@ -112,7 +126,7 @@ const server = serve({
     },
   },
 
-  // Handle WebSocket upgrades and production static file serving
+  // Handle WebSocket upgrades
   async fetch(req, server) {
     const url = new URL(req.url);
 
@@ -120,29 +134,6 @@ const server = serve({
       const upgraded = server.upgrade(req);
       if (upgraded) return undefined;
       return new Response('WebSocket upgrade failed', { status: 400 });
-    }
-
-    // In production, serve static files from dist/
-    if (IS_PROD) {
-      const filePath = url.pathname === '/'
-        ? path.join(DIST_DIR, 'index.html')
-        : path.join(DIST_DIR, url.pathname);
-
-      // Prevent path traversal
-      if (!path.resolve(filePath).startsWith(DIST_DIR)) {
-        return new Response('Forbidden', { status: 403 });
-      }
-
-      const file = Bun.file(filePath);
-      if (await file.exists()) {
-        return new Response(file);
-      }
-
-      // SPA fallback: serve index.html for unmatched routes
-      const indexFile = Bun.file(path.join(DIST_DIR, 'index.html'));
-      if (await indexFile.exists()) {
-        return new Response(indexFile);
-      }
     }
 
     return new Response('Not found', { status: 404 });
@@ -160,6 +151,11 @@ const server = serve({
     close(ws) {
       wsClients.delete(ws);
     },
+  },
+
+  development: process.env.NODE_ENV !== 'production' && {
+    hmr: true,
+    console: true,
   },
 });
 

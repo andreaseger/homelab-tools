@@ -17,6 +17,14 @@ function loadScript(src: string): Promise<void> {
   });
 }
 
+function loadStylesheet(href: string) {
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = href;
+  document.head.appendChild(link);
+}
+
+loadStylesheet('/vendor/swagger-editor.css');
 loadScript('/vendor/swagger-editor.js').then(() => {
   const root = createRoot(document.getElementById('root')!);
   root.render(<App />);

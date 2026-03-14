@@ -8,24 +8,12 @@
     "dev": {
       "executor": "nx:run-commands",
       "options": {
-        "commands": [
-          "bun run server/index.ts",
-          "bunx vite"
-        ],
-        "parallel": true,
+        "command": "bun --hot server/index.ts",
         "cwd": "{projectRoot}",
         "env": {
           "SPECS_DIR": "../../specs/"
         }
       }
-    },
-    "build": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "bunx vite build",
-        "cwd": "{projectRoot}"
-      },
-      "cache": true
     },
     "typecheck": {
       "executor": "nx:run-commands",
@@ -37,7 +25,6 @@
     },
     "docker:build": {
       "executor": "nx:run-commands",
-      "dependsOn": ["build"],
       "options": {
         "command": "docker build -t api-portal -f apps/api-portal/Dockerfile .",
         "cwd": ""

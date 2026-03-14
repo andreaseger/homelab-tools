@@ -1,19 +1,6 @@
 import SwaggerUI from 'swagger-ui-react';
 import 'swagger-ui-react/swagger-ui.css';
 
-declare global {
-  interface Window {
-    SwaggerEditor: {
-      plugins: {
-        EditorContentOrigin: unknown;
-        EditorContentType: unknown;
-        EditorPreviewAsyncAPI: unknown;
-        SwaggerUIAdapter: unknown;
-      };
-    };
-  }
-}
-
 interface SpecViewerProps {
   filename: string;
   specVersion: number;
