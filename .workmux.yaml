@@ -102,7 +102,7 @@ panes:
 
 # Agent command for '<agent>' placeholder in pane commands.
 # Default: "claude"
-agent: opencode
+agent: claude
 
 # LLM-based branch name generation (`workmux add -A`).
 # auto_name:
