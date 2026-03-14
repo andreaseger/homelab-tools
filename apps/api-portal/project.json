@@ -1,0 +1,47 @@
+{
+  "name": "api-portal",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/api-portal",
+  "tags": ["npm:private", "platform:amd64", "platform:arm64"],
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "bun run server/index.ts",
+          "bunx vite"
+        ],
+        "parallel": true,
+        "cwd": "{projectRoot}",
+        "env": {
+          "SPECS_DIR": "../../specs/"
+        }
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bunx vite build",
+        "cwd": "{projectRoot}"
+      },
+      "cache": true
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun tsc --noEmit",
+        "cwd": "{projectRoot}"
+      },
+      "cache": true
+    },
+    "docker:build": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "options": {
+        "command": "docker build -t api-portal -f apps/api-portal/Dockerfile .",
+        "cwd": ""
+      }
+    }
+  }
+}
