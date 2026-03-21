@@ -1,13 +1,20 @@
 <!-- bun start -->
 
-Default to using Bun instead of Node.js.
+Use PNPM for package management and Bun as the runtime.
+
+### Package management (PNPM)
+
+- Use `pnpm install` to install dependencies
+- Use `pnpm add <package>` to add a dependency
+- Use `pnpm add -D <package>` to add a dev dependency
+- Use `pnpm dlx <package> <command>` instead of `npx`
+- Use `pnpm deploy --filter=<package> --prod <dir>` for isolated Docker builds
+
+### Runtime (Bun)
 
 - Use `bun <file>` instead of `node <file>` or `ts-node <file>`
 - Use `bun test` instead of `jest` or `vitest`
 - Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
-- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
-- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
-- Use `bunx <package> <command>` instead of `npx <package> <command>`
 - Bun automatically loads .env, so don't use dotenv.
 
 ## APIs
