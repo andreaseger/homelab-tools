@@ -1,13 +1,19 @@
-FROM oven/bun:1 AS builder
+FROM node:22-slim AS deps
+
+RUN corepack enable pnpm
 
 WORKDIR /app
 
-# Replicate workspace structure for lockfile compatibility
-COPY package.json bun.lock ./
+# Copy workspace config for pnpm install
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/api-portal/package.json apps/api-portal/
-RUN bun install --frozen-lockfile
 
-# Final runtime stage
+RUN pnpm install --frozen-lockfile
+
+# Deploy isolated production dependencies
+RUN pnpm deploy --filter=@ohoio/api-portal --prod /deploy
+
+# Final runtime stage — Bun for execution
 FROM oven/bun:1
 
 LABEL org.opencontainers.image.source="https://github.com/ane/homelab-tools"
@@ -15,9 +21,8 @@ LABEL org.opencontainers.image.description="API Portal for OpenAPI and AsyncAPI 
 
 WORKDIR /app
 
-# Copy dependencies from builder
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/apps/api-portal/node_modules ./apps/api-portal/node_modules
+# Copy only this app's production dependencies
+COPY --from=deps /deploy/node_modules ./node_modules
 
 # Copy application code
 COPY apps/api-portal/server ./server
@@ -25,7 +30,6 @@ COPY apps/api-portal/client ./client
 COPY apps/api-portal/bunfig.toml ./
 COPY apps/api-portal/tsconfig.json ./
 
-# Default specs directory (mount from host)
 ENV SPECS_DIR=/specs
 ENV NODE_ENV=production
 ENV PORT=3000
