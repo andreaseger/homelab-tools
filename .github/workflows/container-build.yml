@@ -51,7 +51,10 @@ jobs:
           # For each affected app, collect platform:* tags into a comma-separated platforms string
           MATRIX="[]"
           for app in $(echo "$APPS" | jq -r '.[]'); do
-            PLATFORMS=$(pnpm nx show project "$app" --json 2>/dev/null \
+            PROJECT=$(pnpm nx show project "$app" --json 2>/dev/null)
+            # Skip apps tagged with release:skip
+            if echo "$PROJECT" | jq -e '.tags // [] | index("release:skip")' > /dev/null; then continue; fi
+            PLATFORMS=$(echo "$PROJECT" \
               | jq -r '.tags // [] | .[] | select(startswith("platform:")) | sub("^platform:"; "linux/")' \
               | paste -sd,)
             # Default to linux/amd64 if no platform tags are set
