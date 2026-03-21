@@ -54,6 +54,7 @@ async function createServer() {
 
   const kc = new k8s.KubeConfig();
   kc.loadFromDefault();
+
   const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
   const k8sCustomApi = kc.makeApiClient(k8s.CustomObjectsApi);
 

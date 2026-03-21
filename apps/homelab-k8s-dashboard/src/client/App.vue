@@ -127,15 +127,17 @@ export default defineComponent({
     const fetchImages = async () => {
       const res = await fetch('/api/images');
       const data = await res.json();
-      images.value = data.images;
-      lastUpdated.value = new Date(data.last_updated).toLocaleString();
-      excludedNamespaces.value = data.excluded_namespaces;
+      images.value = data.images ?? [];
+      lastUpdated.value = data.last_updated
+        ? new Date(data.last_updated).toLocaleString()
+        : '';
+      excludedNamespaces.value = data.excluded_namespaces ?? [];
     };
 
     const fetchHelmCharts = async () => {
       const res = await fetch('/api/helm-charts');
       const data = await res.json();
-      helmCharts.value = data.helm_charts;
+      helmCharts.value = data.helm_charts ?? [];
     };
 
     const toggleShowExcluded = () => {
