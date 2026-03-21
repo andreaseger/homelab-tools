@@ -9,7 +9,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": ["rm -rf dist", "vue-tsc --build", "vite build"],
-        "cwd": "apps/homelab-k8s-dashboard",
+        "cwd": "{projectRoot}",
         "parallel": false
       },
       "cache": true,
@@ -20,12 +20,14 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "bun --watch src/server/server.ts",
-        "cwd": "apps/homelab-k8s-dashboard"
+        "cwd": "{projectRoot}"
       }
     },
     "docker:build": {
+      "executor": "nx:run-commands",
       "options": {
-        "command": "docker build -t homelab-k8s-dashboard ."
+        "command": "docker build -f {projectRoot}/Dockerfile -t homelab-k8s-dashboard .",
+        "cwd": "{workspaceRoot}"
       }
     },
     "lint": {
@@ -35,7 +37,7 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "vue-tsc --noEmit -p tsconfig.client.json && tsc --noEmit -p tsconfig.server.json && tsc --noEmit -p tsconfig.node.json",
-        "cwd": "apps/homelab-k8s-dashboard"
+        "cwd": "{projectRoot}"
       },
       "cache": true
     }

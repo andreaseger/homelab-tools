@@ -1,17 +1,38 @@
 # ---- Builder Stage ----
-FROM oven/bun:1 AS builder
+FROM node:22-slim AS builder
+
+RUN corepack enable pnpm
 
 WORKDIR /app
 
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
+# Copy workspace config for pnpm install
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY apps/homelab-k8s-dashboard/package.json apps/homelab-k8s-dashboard/
 
-COPY src/ ./src/
-COPY tsconfig*.json vite.config.ts ./
+RUN pnpm install --frozen-lockfile
 
-# Type checking is handled by the CI pipeline (nx run typecheck).
-# Only the server needs tsc --build for emit; the client just needs vite build.
-RUN bun tsc --build tsconfig.server.json && bun vite build
+COPY apps/homelab-k8s-dashboard/src apps/homelab-k8s-dashboard/src
+COPY apps/homelab-k8s-dashboard/tsconfig*.json apps/homelab-k8s-dashboard/
+COPY apps/homelab-k8s-dashboard/vite.config.ts apps/homelab-k8s-dashboard/
+
+# Type-check and emit server JS; bundle client with Vite
+RUN cd apps/homelab-k8s-dashboard && \
+    /app/node_modules/.bin/vue-tsc --build && \
+    /app/node_modules/.bin/vite build
+
+# ---- Production dependencies ----
+FROM node:22-slim AS prod-deps
+
+RUN corepack enable pnpm
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY apps/homelab-k8s-dashboard/package.json apps/homelab-k8s-dashboard/
+
+RUN pnpm install --frozen-lockfile
+
+RUN pnpm deploy --filter=@apps/homelab-k8s-dashboard --prod /deploy
 
 # ---- Production Stage ----
 FROM oven/bun:1
@@ -21,10 +42,8 @@ LABEL org.opencontainers.image.description="K8s dashboard showing deployed conta
 
 WORKDIR /app
 
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package.json ./package.json
-
-RUN bun install --production
+COPY --from=prod-deps /deploy/node_modules ./node_modules
+COPY --from=builder /app/apps/homelab-k8s-dashboard/dist ./dist
 
 ENV NODE_ENV=production
 
