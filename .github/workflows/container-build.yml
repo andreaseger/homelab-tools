@@ -31,10 +31,6 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -105,6 +101,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: apps/${{ matrix.app }}
+          file: apps/${{ matrix.app }}/Dockerfile
+          build-contexts: workspace=.
           platforms: ${{ matrix.platforms }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}

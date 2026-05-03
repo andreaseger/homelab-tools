@@ -26,8 +26,8 @@
     "docker:build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "docker build -t api-portal -f apps/api-portal/Dockerfile .",
-        "cwd": ""
+        "command": "docker build -t api-portal --build-context workspace=. -f apps/api-portal/Dockerfile apps/api-portal",
+        "cwd": "{workspaceRoot}"
       }
     }
   }

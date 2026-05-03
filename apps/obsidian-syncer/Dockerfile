@@ -9,9 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Copy workspace config for pnpm install
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
-COPY apps/obsidian-syncer/package.json apps/obsidian-syncer/
+COPY --from=workspace package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY --from=workspace apps/obsidian-syncer/package.json apps/obsidian-syncer/
 
 RUN pnpm install --frozen-lockfile
 
@@ -30,10 +29,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Copy only this app's production dependencies
 COPY --from=deps /deploy/node_modules ./node_modules
 
-# Copy application code
 COPY index.ts ./
 
 # Create symlink for ob command

@@ -6,12 +6,11 @@
   "tags": ["npm:private", "platform:amd64", "platform:arm64"],
   "targets": {
     "docker:build": {
+      "executor": "nx:run-commands",
       "options": {
-        "command": "docker build -t obsidian-syncer ."
+        "command": "docker build -t obsidian-syncer --build-context workspace=. -f apps/obsidian-syncer/Dockerfile apps/obsidian-syncer",
+        "cwd": "{workspaceRoot}"
       }
-    },
-    "lint": {
-      "dependsOn": ["typecheck"]
     },
     "typecheck": {
       "executor": "nx:run-commands",

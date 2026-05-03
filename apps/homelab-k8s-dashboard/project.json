@@ -30,9 +30,6 @@
         "cwd": "{workspaceRoot}"
       }
     },
-    "lint": {
-      "dependsOn": ["typecheck"]
-    },
     "typecheck": {
       "executor": "nx:run-commands",
       "options": {
