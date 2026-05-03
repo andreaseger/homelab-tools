@@ -4,20 +4,20 @@ A monorepo of containerized applications and utilities for homelab infrastructur
 
 ## Getting Started
 
-This workspace uses [Nx](https://nx.dev) for task orchestration and [Bun](https://bun.sh) as the JavaScript runtime. Nx manages the project graph, task dependencies, and caching — there are no npm/bun workspaces. Each app maintains its own `bun.lock` and `node_modules`, keeping dependency trees independent and Docker builds self-contained.
+This workspace uses [Nx](https://nx.dev) for task orchestration and [Bun](https://bun.sh) as the JavaScript runtime. PNPM is used for package management. Nx manages the project graph, task dependencies, and caching — there are no npm/pnpm workspaces. Each app maintains its own `pnpm-lock.yaml` and `node_modules`, keeping dependency trees independent and Docker builds self-contained.
 
 ```sh
 # Install root tooling (nx, eslint, prettier, husky)
-bun install
+pnpm install
 
 # Install dependencies for a specific app
-cd apps/<app> && bun install
+cd apps/<app> && pnpm install
 
 # Run tasks
-bun nx run <project>:<target>
+pnpm nx run <project>:<target>
 
 # View project graph
-bun nx graph
+pnpm nx graph
 ```
 
 ## Projects
@@ -31,16 +31,16 @@ bun nx graph
 
 ```sh
 # Type check all projects
-bun nx run-many -t typecheck
+pnpm nx run-many -t typecheck
 
 # Build container images locally
-bun nx run <app>:docker:build
+pnpm nx run <app>:docker:build
 
 # Run all lint checks
-bun nx run-many -t lint
+pnpm nx run-many -t lint
 
 # Format code
-bun nx format
+pnpm nx format
 ```
 
 ## CI/CD
@@ -62,14 +62,15 @@ The workflows use [`nrwl/nx-set-shas`](https://github.com/nrwl/nx-set-shas) to t
 
 ### Prerequisites
 
-- [Bun](https://bun.sh) (v1.3+)
+- [PNPM](https://pnpm.io) (for package management)
+- [Bun](https://bun.sh) (v1.3+) (as JavaScript runtime)
 - [Docker](https://docker.com) (for container builds)
 
 ### Project Structure
 
 ```
 homelab-tools/
-├── apps/                  # Applications (each with own bun.lock)
+├── apps/                  # Applications (each with own pnpm-lock.yaml)
 │   ├── homelab-k8s-dashboard/
 │   └── obsidian-syncer/
 ├── .github/               # CI/CD workflows

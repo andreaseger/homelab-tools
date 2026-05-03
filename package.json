@@ -5,7 +5,6 @@
   "packageManager": "pnpm@10.18.3",
   "scripts": {},
   "private": true,
-  "dependencies": {},
   "devDependencies": {
     "@nx/docker": "22.5.4",
     "@nx/workspace": "^22.5.4",
@@ -16,7 +15,20 @@
   },
   "pnpm": {
     "peerDependencyRules": {
-      "ignoreMissing": ["bun"]
-    }
+      "ignoreMissing": [
+        "bun"
+      ]
+    },
+    "onlyBuiltDependencies": [
+      "@scarf/scarf",
+      "@tree-sitter-grammars/tree-sitter-yaml",
+      "better-sqlite3",
+      "core-js-pure",
+      "esbuild",
+      "nx",
+      "protobufjs",
+      "tree-sitter",
+      "tree-sitter-json"
+    ]
   }
 }

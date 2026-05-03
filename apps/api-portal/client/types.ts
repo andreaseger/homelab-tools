@@ -12,10 +12,10 @@ declare global {
     ReactDOM: typeof import('react-dom');
     SwaggerEditor: {
       plugins: {
-        EditorContentOrigin: unknown;
-        EditorContentType: unknown;
-        EditorPreviewAsyncAPI: unknown;
-        SwaggerUIAdapter: unknown;
+        EditorContentOrigin: any;
+        EditorContentType: any;
+        EditorPreviewAsyncAPI: any;
+        SwaggerUIAdapter: any;
       };
     };
   }
