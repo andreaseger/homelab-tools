@@ -6,6 +6,8 @@ WORKDIR /app
 
 COPY --from=workspace package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY --from=workspace apps/api-portal/package.json apps/api-portal/
+COPY --from=workspace apps/obsidian-syncer/package.json apps/obsidian-syncer/
+COPY --from=workspace apps/homelab-k8s-dashboard/package.json apps/homelab-k8s-dashboard/
 
 RUN pnpm install --frozen-lockfile
 
