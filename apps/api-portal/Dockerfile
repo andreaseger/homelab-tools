@@ -2,6 +2,10 @@ FROM node:22-slim AS deps
 
 RUN corepack enable pnpm
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 COPY --from=workspace package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./

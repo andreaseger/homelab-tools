@@ -120,7 +120,7 @@ agent: claude
 # Set to empty list to disable: `post_create: []`
 post_create:
   - "<global>"
-  - bun install
+  - pnpm install
 
 # Commands to run before merging (e.g., linting, tests).
 # Aborts the merge if any command fails.
@@ -167,7 +167,6 @@ post_create:
 files:
   symlink:
     - .env
-    - .claude/settings.local.json
 
 #-------------------------------------------------------------------------------
 # Dashboard
