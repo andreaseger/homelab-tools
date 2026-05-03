@@ -14,12 +14,6 @@
           "name": "docker:build"
         }
       }
-    },
-    {
-      "plugin": "@nx/eslint/plugin",
-      "options": {
-        "targetName": "lint"
-      }
     }
   ]
 }
