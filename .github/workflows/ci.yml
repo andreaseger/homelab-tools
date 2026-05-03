@@ -20,6 +20,10 @@ jobs:
           fetch-depth: 0
 
       - uses: pnpm/action-setup@v4
+      
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
       - uses: actions/setup-node@v4
         with:
