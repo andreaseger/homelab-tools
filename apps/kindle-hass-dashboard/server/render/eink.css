@@ -1,0 +1,151 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  background-color: #f0f0f0;
+  font-family: 'Bookerly', 'Georgia', serif;
+  width: 1072px;
+  height: 1448px;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 2px solid #808080;
+  margin-bottom: 12px;
+}
+
+.header-title {
+  font-size: 28px;
+  font-weight: bold;
+  color: #202020;
+}
+
+.clock-display {
+  font-size: 48px;
+  font-weight: bold;
+  color: #101010;
+}
+
+.clock-date {
+  font-size: 20px;
+  color: #606060;
+}
+
+.sensor-card {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  border: 2px solid #a0a0a0;
+  border-radius: 4px;
+  background-color: #e8e8e8;
+}
+
+.sensor-label {
+  font-size: 16px;
+  color: #606060;
+  margin-bottom: 4px;
+}
+
+.sensor-value {
+  font-size: 36px;
+  font-weight: bold;
+  color: #101010;
+}
+
+.sensor-unit {
+  font-size: 18px;
+  color: #808080;
+  margin-left: 4px;
+}
+
+.light-card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border: 2px solid #a0a0a0;
+  border-radius: 4px;
+  background-color: #e8e8e8;
+}
+
+.light-card-on {
+  background-color: #ffffff;
+}
+
+.light-label {
+  font-size: 18px;
+  color: #404040;
+}
+
+.light-state {
+  font-size: 24px;
+  font-weight: bold;
+  color: #101010;
+  margin-top: 8px;
+}
+
+.binary-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.binary-icon {
+  font-size: 32px;
+  color: #404040;
+}
+
+.binary-icon-on {
+  color: #101010;
+}
+
+.binary-label {
+  font-size: 16px;
+  color: #606060;
+}
+
+.binary-state {
+  font-size: 20px;
+  font-weight: bold;
+  color: #202020;
+}
+
+.page-tabs {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  border: 2px solid #808080;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.page-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  font-size: 20px;
+  color: #404040;
+  background-color: #e0e0e0;
+  border-right: 1px solid #a0a0a0;
+}
+
+.page-tab-active {
+  background-color: #ffffff;
+  color: #101010;
+  font-weight: bold;
+}
+
+.page-tab:last-child {
+  border-right: none;
+}
+
+.graph-svg {
+  border: 1px solid #a0a0a0;
+  border-radius: 4px;
+  background-color: #f8f8f8;
+}

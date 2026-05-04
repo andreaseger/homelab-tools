@@ -1,17 +1,26 @@
-import type { DeviceProfile, DeviceId } from '../shared/types';
+import type { DeviceProfile, DeviceId, ActionHotZone } from '../shared/types';
+import { deviceProfiles } from '../config/devices';
 
-const DEFAULT_PROFILES: DeviceProfile[] = [
-  {
-    id: 'kindle1',
-    width: 1072,
-    height: 1448,
-    startPageId: 'overview',
-  },
-];
+class DeviceState {
+  currentPage: string;
+  currentEtag: string | null;
+  touchmap: ActionHotZone[];
+  lastEntityValues: Record<string, unknown>;
+  lastRenderAt: number;
+
+  constructor(public readonly profile: DeviceProfile) {
+    this.currentPage = profile.startPageId;
+    this.currentEtag = null;
+    this.touchmap = [];
+    this.lastEntityValues = {};
+    this.lastRenderAt = 0;
+  }
+}
 
 class DeviceRegistry {
+  private states = new Map<DeviceId, DeviceState>();
   private profiles = new Map<DeviceId, DeviceProfile>(
-    DEFAULT_PROFILES.map((p) => [p.id, p])
+    deviceProfiles.map((p) => [p.id, p])
   );
 
   getProfile(deviceId: string): DeviceProfile {
@@ -19,12 +28,22 @@ class DeviceRegistry {
     if (!profile) {
       return {
         id: deviceId,
-        width: DEFAULT_PROFILES[0]!.width,
-        height: DEFAULT_PROFILES[0]!.height,
-        startPageId: DEFAULT_PROFILES[0]!.startPageId,
+        width: deviceProfiles[0]!.width,
+        height: deviceProfiles[0]!.height,
+        startPageId: deviceProfiles[0]!.startPageId,
       };
     }
     return profile;
+  }
+
+  getState(deviceId: string): DeviceState {
+    let state = this.states.get(deviceId);
+    if (!state) {
+      const profile = this.getProfile(deviceId);
+      state = new DeviceState(profile);
+      this.states.set(deviceId, state);
+    }
+    return state;
   }
 
   list(): DeviceProfile[] {
