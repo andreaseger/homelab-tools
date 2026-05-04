@@ -14,7 +14,6 @@ let conn: Connection | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 const listeners = new Set<(entities: HassEntities) => void>();
 let latestEntities: HassEntities = {};
-let connectStarted = false;
 
 function restUrl(): string {
   return HASS_URL!;

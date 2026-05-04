@@ -7,6 +7,8 @@ import { pageBus } from './page-bus';
 import { onEntitiesChange } from './hass';
 import { devices } from './devices';
 import { pages } from '../config/pages';
+import { authMiddleware } from './auth';
+import { rateLimit } from './rate-limit';
 
 const PORT = parseInt(process.env.PORT ?? '8080', 10);
 
@@ -47,6 +49,9 @@ const server = serve({
 
     '/render': {
       async GET(req) {
+        const auth = authMiddleware(req);
+        if (auth) return auth;
+
         const url = new URL(req.url);
         const device = url.searchParams.get('device') ?? 'kindle1';
         const ifNoneMatch = req.headers.get('if-none-match');
@@ -69,7 +74,16 @@ const server = serve({
 
     '/touch': {
       async POST(req) {
-        const body = await req.json().catch(() => ({}));
+        const auth = authMiddleware(req);
+        if (auth) return auth;
+
+        const body = await req.json().catch(() => ({})) as Record<string, unknown>;
+        const device = body.device as string;
+
+        if (device && !rateLimit(device)) {
+          return Response.json({ error: 'rate limited' }, { status: 429 });
+        }
+
         const result = await handleTouch(body);
         return Response.json(result.body, { status: result.status });
       },
@@ -77,6 +91,9 @@ const server = serve({
 
     '/preview/:device': {
       async GET(req) {
+        const auth = authMiddleware(req);
+        if (auth) return auth;
+
         const device = req.params.device;
         return servePreview(device);
       },
