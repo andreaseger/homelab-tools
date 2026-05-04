@@ -1,0 +1,34 @@
+{
+  "name": "kindle-hass-dashboard",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/kindle-hass-dashboard",
+  "tags": ["npm:private", "platform:amd64"],
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun --hot server/index.ts",
+        "cwd": "{projectRoot}",
+        "env": {
+          "NODE_ENV": "development"
+        }
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun tsc --noEmit",
+        "cwd": "{projectRoot}"
+      },
+      "cache": true
+    },
+    "docker:build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker build -t kindle-hass-dashboard --build-context workspace=. -f apps/kindle-hass-dashboard/Dockerfile apps/kindle-hass-dashboard",
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  }
+}
