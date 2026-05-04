@@ -10,14 +10,11 @@ import {
 const HASS_URL = process.env.HASS_URL;
 const HASS_TOKEN = process.env.HASS_TOKEN;
 
-if (!HASS_URL || !HASS_TOKEN) {
-  throw new Error('HASS_URL and HASS_TOKEN are required');
-}
-
 let conn: Connection | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 const listeners = new Set<(entities: HassEntities) => void>();
 let latestEntities: HassEntities = {};
+let connectStarted = false;
 
 function restUrl(): string {
   return HASS_URL!;
@@ -57,6 +54,10 @@ async function connect(): Promise<Connection> {
 }
 
 async function connectWithRetry(): Promise<void> {
+  if (!HASS_URL || !HASS_TOKEN) {
+    console.warn('⚠️ HASS_URL/HASS_TOKEN not set, skipping HASS connection');
+    return;
+  }
   try {
     conn = await connect();
     console.log('✅ Connected to Home Assistant');
@@ -73,7 +74,9 @@ async function connectWithRetry(): Promise<void> {
   }
 }
 
-connectWithRetry();
+if (HASS_URL && HASS_TOKEN) {
+  connectWithRetry();
+}
 
 export function onEntitiesChange(fn: (entities: HassEntities) => void): () => void {
   listeners.add(fn);
