@@ -1,6 +1,3 @@
-const DASHBOARD_URL = process.env.KINDLE_DASH_URL ?? 'http://127.0.0.1:8080';
-const DASHBOARD_TOKEN = process.env.DASHBOARD_TOKEN ?? '';
-
 interface DeviceState {
   id: string;
   current_page: string;
@@ -19,10 +16,18 @@ interface CommandRequest {
 }
 
 export class DashboardClient {
+  private baseUrl: string;
+  private token: string;
+
+  constructor(baseUrl?: string, token?: string) {
+    this.baseUrl = baseUrl ?? process.env.KINDLE_DASH_URL ?? 'http://127.0.0.1:8080';
+    this.token = token ?? process.env.DASHBOARD_TOKEN ?? '';
+  }
+
   async getState(): Promise<DashboardStateResponse | null> {
     try {
-      const res = await fetch(`${DASHBOARD_URL}/state`, {
-        headers: { Authorization: `Bearer ${DASHBOARD_TOKEN}` },
+      const res = await fetch(`${this.baseUrl}/state`, {
+        headers: { Authorization: `Bearer ${this.token}` },
       });
       if (!res.ok) return null;
       return res.json() as Promise<DashboardStateResponse>;
@@ -34,13 +39,29 @@ export class DashboardClient {
   async postCommand(device: string, kind: string, value: number): Promise<boolean> {
     try {
       const body: CommandRequest = { device, kind, value };
-      const res = await fetch(`${DASHBOARD_URL}/command`, {
+      const res = await fetch(`${this.baseUrl}/command`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${DASHBOARD_TOKEN}`,
+          Authorization: `Bearer ${this.token}`,
         },
         body: JSON.stringify(body),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  async postCommandWithBody(device: string, body: Record<string, unknown>): Promise<boolean> {
+    try {
+      const res = await fetch(`${this.baseUrl}/command`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.token}`,
+        },
+        body: JSON.stringify({ device, ...body }),
       });
       return res.ok;
     } catch {

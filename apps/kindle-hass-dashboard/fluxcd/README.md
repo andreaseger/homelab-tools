@@ -25,10 +25,10 @@ kubectl apply -k fluxcd/
 
 ## Configuration
 
-| Env Var | Description |
-|---------|-------------|
-| `HASS_URL` | Internal URL to Home Assistant (e.g., `http://home-assistant.home-assistant.svc:8123`) |
-| `HASS_TOKEN` | HASS long-lived access token |
-| `DASHBOARD_TOKEN` | Bearer token for Kindle daemon auth |
-| `PORT` | Server port (default: 8080) |
-| `NODE_ENV` | `production` or `development` |
+| Env Var           | Description                                                                            |
+| ----------------- | -------------------------------------------------------------------------------------- |
+| `HASS_URL`        | Internal URL to Home Assistant (e.g., `http://home-assistant.home-assistant.svc:8123`) |
+| `HASS_TOKEN`      | HASS long-lived access token                                                           |
+| `DASHBOARD_TOKEN` | Bearer token for Kindle daemon auth                                                    |
+| `PORT`            | Server port (default: 8080)                                                            |
+| `NODE_ENV`        | `production` or `development`                                                          |

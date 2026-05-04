@@ -1,0 +1,7 @@
+{
+  "rules": {
+    "import/no-cycle": "warn",
+    "no-console": "off"
+  },
+  "ignorePatterns": ["node_modules", "dist", "__snapshots__"]
+}

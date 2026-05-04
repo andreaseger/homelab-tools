@@ -18,16 +18,29 @@ describe('/state endpoint', () => {
       routes: {
         '/state': {
           GET() {
-            return Response.json({ devices: [{ id: 'kindle1', current_page: 'overview', paused: false, last_render_at: 0, width: 1072, height: 1448 }] });
+            return Response.json({
+              devices: [
+                {
+                  id: 'kindle1',
+                  current_page: 'overview',
+                  paused: false,
+                  last_render_at: 0,
+                  width: 1072,
+                  height: 1448,
+                },
+              ],
+            });
           },
         },
       },
-      fetch() { return new Response('not found', { status: 404 }); },
+      fetch() {
+        return new Response('not found', { status: 404 });
+      },
     });
 
     const res = await fetch(`http://localhost:${server.port}/state`);
     expect(res.status).toBe(200);
-    const data = await res.json() as { devices: unknown[] };
+    const data = (await res.json()) as { devices: unknown[] };
     expect(data.devices).toHaveLength(1);
     server.stop();
   });
@@ -41,7 +54,7 @@ describe('/command endpoint', () => {
       routes: {
         '/command': {
           async POST(req) {
-            const body = await req.json() as { device: string; kind: string; value: number };
+            const body = (await req.json()) as { device: string; kind: string; value: number };
             if (!queues.has(body.device)) queues.set(body.device, []);
             queues.get(body.device)!.push(body);
             return Response.json({ ok: true });
@@ -53,7 +66,9 @@ describe('/command endpoint', () => {
           },
         },
       },
-      fetch() { return new Response('not found', { status: 404 }); },
+      fetch() {
+        return new Response('not found', { status: 404 });
+      },
     });
 
     await fetch(`http://localhost:${server.port}/command`, {
@@ -63,7 +78,7 @@ describe('/command endpoint', () => {
     });
 
     const res = await fetch(`http://localhost:${server.port}/command?device=kindle1`);
-    const data = await res.json() as { commands: unknown[] };
+    const data = (await res.json()) as { commands: unknown[] };
     expect(data.commands).toHaveLength(1);
     server.stop();
   });

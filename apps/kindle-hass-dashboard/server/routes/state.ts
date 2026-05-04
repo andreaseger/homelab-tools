@@ -16,7 +16,7 @@ export function serveState(): Response {
     return {
       id: profile.id,
       current_page: state.currentPage,
-      paused: false,
+      paused: state.paused,
       last_render_at: state.lastRenderAt,
       width: profile.width,
       height: profile.height,

@@ -28,5 +28,8 @@ export function dequeueCommands(device: string, since: number): Command[] {
 
 export function serveCommands(device: string, since: number): Response {
   const commands = dequeueCommands(device, since);
-  return Response.json({ commands, nextSince: commands.length > 0 ? commands[commands.length - 1]!.seq : since });
+  return Response.json({
+    commands,
+    nextSince: commands.length > 0 ? commands[commands.length - 1]!.seq : since,
+  });
 }

@@ -58,4 +58,25 @@ describe('resolveTap', () => {
     expect(resolveTap(zones, 30, 10).kind).toBe('noop');
     expect(resolveTap(zones, 10, 30).kind).toBe('noop');
   });
+
+  test('negative coordinates return noop', () => {
+    const zones: ActionHotZone[] = [
+      {
+        bbox: { x: 10, y: 10, w: 20, h: 20 },
+        action: { kind: 'navigate', pageId: 'test' },
+      },
+    ];
+    expect(resolveTap(zones, -1, 10)).toEqual({ kind: 'noop' });
+    expect(resolveTap(zones, 10, -1)).toEqual({ kind: 'noop' });
+  });
+
+  test('very large coordinates return noop', () => {
+    const zones: ActionHotZone[] = [
+      {
+        bbox: { x: 0, y: 0, w: 100, h: 100 },
+        action: { kind: 'navigate', pageId: 'test' },
+      },
+    ];
+    expect(resolveTap(zones, 99999, 99999)).toEqual({ kind: 'noop' });
+  });
 });

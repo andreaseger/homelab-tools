@@ -27,12 +27,23 @@ COPY server ./server
 COPY widgets ./widgets
 COPY shared  ./shared
 COPY config  ./config
+COPY matter-plugin ./matter-plugin
+COPY kindle ./kindle
+COPY fluxcd ./fluxcd
 COPY bunfig.toml ./
 COPY tsconfig.json ./
+COPY entrypoint.sh ./
+
+RUN bun build matter-plugin/src/index.ts --outdir matter-plugin/dist --target bun
+RUN chmod +x entrypoint.sh
 
 ENV NODE_ENV=production
 ENV PORT=8080
+ENV EXPOSE_PORT=8081
+ENV MATTERBRIDGE_FRONTEND=8283
 
-EXPOSE 8080
+EXPOSE 8080 8081 8283
 
-CMD ["bun", "run", "server/index.ts"]
+VOLUME ["/root/.matterbridge"]
+
+ENTRYPOINT ["./entrypoint.sh"]

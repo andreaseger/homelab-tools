@@ -31,6 +31,29 @@
       },
       "cache": true
     },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec oxlint --config .oxlintrc.json apps/kindle-hass-dashboard",
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": true
+    },
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec prettier --check \"apps/kindle-hass-dashboard/**/*.{ts,tsx,js,json,yaml,yml,md}\"",
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": true
+    },
+    "format:write": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec prettier --write \"apps/kindle-hass-dashboard/**/*.{ts,tsx,js,json,yaml,yml,md}\"",
+        "cwd": "{workspaceRoot}"
+      }
+    },
     "docker:build": {
       "executor": "nx:run-commands",
       "options": {

@@ -9,7 +9,13 @@ export interface BBox {
 
 export type Action =
   | { kind: 'navigate'; pageId: string }
-  | { kind: 'service'; domain: string; service: string; target?: { entity_id?: string | string[]; area_id?: string }; data?: Record<string, unknown> }
+  | {
+      kind: 'service';
+      domain: string;
+      service: string;
+      target?: { entity_id?: string | string[]; area_id?: string };
+      data?: Record<string, unknown>;
+    }
   | { kind: 'noop' };
 
 export interface ActionHotZone {
@@ -40,6 +46,12 @@ export interface WidgetCtx {
   entityValues: Record<string, unknown>;
   now: Date;
   registerHotZone: (bbox: BBox, action: Action, debug?: string) => void;
+  fetchHistory: (entityIds: string[], hours: number) => Promise<HistoryEntry[]>;
+}
+
+export interface HistoryEntry {
+  timestamp: number;
+  value: number;
 }
 
 export interface PageConfig {

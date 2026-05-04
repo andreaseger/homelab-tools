@@ -7,6 +7,7 @@ A jailbroken Kindle Paperwhite 7th gen (PW3, 2015 — 1072×1448, 6", 300 PPI, 1
 Goal: a new Bun-based middleware service in this Nx monorepo that talks to Home Assistant and renders e-ink-friendly PNG dashboards for the Kindle, plus a KUAL extension that polls images and forwards taps. The Kindle is a dumb terminal; all logic lives in the service, so layout/feature changes need no Kindle redeploy. Multiple pages (status overview, lights per room), reusable widgets configured by entity + display options, and a built-in `/preview/:device` dev view that renders identically to the Kindle output.
 
 Confirmed design choices:
+
 - **Renderer:** Satori (React → SVG) + `@resvg/resvg-js` (SVG → PNG) + Sharp (greyscale + Floyd-Steinberg 16-level dither). Pure JS + one native binding, ~5 MB of dependency footprint. Same render function feeds `/preview/:device` (served as inline PNG in an HTML shell) and the Kindle `/render` route — single source of truth.
 - **Snapshot tests:** `bun test` with pixel-diff snapshot baselines. The renderer is a pure function `(device, state) → {png, touchmap}`; no browser, no separate Nx e2e project, no `@nx/playwright`.
 - **Architecture:** amd64-only — drops `platform:arm64` tag.
@@ -132,17 +133,34 @@ apps/kindle-hass-dashboard/
 
 ```ts
 export type DeviceId = string;
-export interface BBox { x: number; y: number; w: number; h: number }
+export interface BBox {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
 export type Action =
   | { kind: 'navigate'; pageId: string }
-  | { kind: 'service'; domain: string; service: string;
+  | {
+      kind: 'service';
+      domain: string;
+      service: string;
       target?: { entity_id?: string | string[]; area_id?: string };
-      data?: Record<string, unknown> }
+      data?: Record<string, unknown>;
+    }
   | { kind: 'noop' };
-export interface ActionHotZone { bbox: BBox; action: Action; debug?: string }
+export interface ActionHotZone {
+  bbox: BBox;
+  action: Action;
+  debug?: string;
+}
 export interface RenderResult {
-  png: Uint8Array; etag: string; touchmap: ActionHotZone[];
-  pageId: string; width: number; height: number;
+  png: Uint8Array;
+  etag: string;
+  touchmap: ActionHotZone[];
+  pageId: string;
+  width: number;
+  height: number;
 }
 export interface WidgetSpec<C = unknown> {
   id: string;
@@ -150,24 +168,36 @@ export interface WidgetSpec<C = unknown> {
   entities?: (config: C) => string[];
   render: (config: C, ctx: WidgetCtx) => Promise<JSX.Element> | JSX.Element;
 }
-export interface PageConfig { id: string; title: string; layout: PlacedWidget[] }
-export interface PlacedWidget { widget: string; bbox: BBox; config: unknown }
+export interface PageConfig {
+  id: string;
+  title: string;
+  layout: PlacedWidget[];
+}
+export interface PlacedWidget {
+  widget: string;
+  bbox: BBox;
+  config: unknown;
+}
 export interface DeviceProfile {
-  id: DeviceId; width: number; height: number; rotation?: 0|90|180|270;
-  startPageId: string; navStripHeight?: number;
+  id: DeviceId;
+  width: number;
+  height: number;
+  rotation?: 0 | 90 | 180 | 270;
+  startPageId: string;
+  navStripHeight?: number;
 }
 ```
 
 ## v1 widget set
 
-| ID | Props | Actions |
-|---|---|---|
-| `sensor-value` | `{entity, label?, decimals?}` | none |
-| `binary-sensor` | `{entity, label?, iconOn?, iconOff?}` | none |
-| `light-toggle` | `{entity, label?}` | tap → `service: light.toggle` |
-| `line-graph` | `{entity, hours, label?, yMin?, yMax?, bucketMinutes?}` | none — hand-rolled `<svg>` (vector all the way to resvg) |
-| `clock` | `{format?: '24h'\|'12h', showDate?}` | none — driven by the global 1-minute synthetic tick |
-| `page-tabs` | `{pages: [{id,label}]}` | tap each → `navigate: pageId` |
+| ID              | Props                                                   | Actions                                                  |
+| --------------- | ------------------------------------------------------- | -------------------------------------------------------- |
+| `sensor-value`  | `{entity, label?, decimals?}`                           | none                                                     |
+| `binary-sensor` | `{entity, label?, iconOn?, iconOff?}`                   | none                                                     |
+| `light-toggle`  | `{entity, label?}`                                      | tap → `service: light.toggle`                            |
+| `line-graph`    | `{entity, hours, label?, yMin?, yMax?, bucketMinutes?}` | none — hand-rolled `<svg>` (vector all the way to resvg) |
+| `clock`         | `{format?: '24h'\|'12h', showDate?}`                    | none — driven by the global 1-minute synthetic tick      |
+| `page-tabs`     | `{pages: [{id,label}]}`                                 | tap each → `navigate: pageId`                            |
 
 Widgets are pure `(config, ctx) => JSX`. They register hot-zones through `ctx.registerHotZone(...)` during render. Layouts use fixed sizes and the Satori-compatible CSS subset (flex, borders, backgrounds, fonts). In practice only 4 grey levels are used.
 
@@ -213,6 +243,7 @@ CMD ["bun", "run", "server/index.ts"]
 Target image size: ≤ 100 MB. amd64 only.
 
 **M7 Dockerfile additions** (applied only at M7):
+
 - `COPY matter-plugin ./matter-plugin`
 - `RUN bun build matter-plugin/src/index.ts --outdir matter-plugin/dist --target bun`
 - `COPY entrypoint.sh ./ && RUN chmod +x entrypoint.sh`
@@ -234,25 +265,25 @@ exec bun run server/index.ts
 
 ## Env vars
 
-| Var | Required | Default | Purpose |
-|---|---|---|---|
-| `HASS_URL` | yes | — | e.g. `http://home-assistant.home-assistant.svc:8123` |
-| `HASS_TOKEN` | yes | — | HASS long-lived token |
-| `DASHBOARD_TOKEN` | yes | — | Bearer for Kindle daemons, `/preview` cookie auth, and (M7) `/state` + `/command` |
-| `PORT` | no | 8080 | |
-| `LOG_LEVEL` | no | info | |
-| `RENDER_DEBOUNCE_MS` | no | 500 | Coalesce burst HASS events |
-| `NODE_ENV` | no | development | Toggles dev meta-refresh + `/preview` |
-| `EXPOSE_ENABLED` | M7 | `false` | When `true`, mount `/state` + `/command` **and** start matterbridge background process |
-| `KINDLE_DASH_URL` | M7 | `http://127.0.0.1:8080` | URL the matterbridge plugin uses to reach the dashboard (loopback) |
-| `MATTERBRIDGE_DIR` | M7 | `/root/.matterbridge` | Matter fabric/cache; mount a PVC here |
+| Var                  | Required | Default                 | Purpose                                                                                |
+| -------------------- | -------- | ----------------------- | -------------------------------------------------------------------------------------- |
+| `HASS_URL`           | yes      | —                       | e.g. `http://home-assistant.home-assistant.svc:8123`                                   |
+| `HASS_TOKEN`         | yes      | —                       | HASS long-lived token                                                                  |
+| `DASHBOARD_TOKEN`    | yes      | —                       | Bearer for Kindle daemons, `/preview` cookie auth, and (M7) `/state` + `/command`      |
+| `PORT`               | no       | 8080                    |                                                                                        |
+| `LOG_LEVEL`          | no       | info                    |                                                                                        |
+| `RENDER_DEBOUNCE_MS` | no       | 500                     | Coalesce burst HASS events                                                             |
+| `NODE_ENV`           | no       | development             | Toggles dev meta-refresh + `/preview`                                                  |
+| `EXPOSE_ENABLED`     | M7       | `false`                 | When `true`, mount `/state` + `/command` **and** start matterbridge background process |
+| `KINDLE_DASH_URL`    | M7       | `http://127.0.0.1:8080` | URL the matterbridge plugin uses to reach the dashboard (loopback)                     |
+| `MATTERBRIDGE_DIR`   | M7       | `/root/.matterbridge`   | Matter fabric/cache; mount a PVC here                                                  |
 
 One token end-to-end. The matterbridge plugin receives `DASHBOARD_TOKEN` via the entrypoint env.
 
 ## Phased milestones (each independently mergeable)
 
 1. **M1 — scaffold + stub render.** Clone api-portal layout. `Bun.serve` with `/health`, stub `/render` (Sharp solid-color placeholder PNG), `/preview/:device` returning an HTML shell that embeds that same PNG + a click-to-`/touch` script. Verify `nx run kindle-hass-dashboard:dev`.
-2. **M2 — HASS state subscription.** Add `home-assistant-js-websocket`; write `server/hass.ts` (~50 LOC) that calls `createConnection({ createSocket: () => new WebSocket(\`${HASS_URL}/api/websocket\`) })` with the long-lived token and exposes `subscribeEntities`, `callService`, `getHistory`. **Spike Bun's `globalThis.WebSocket` against the lib** — the only realistic compat risk. Smoke test: log live `state_changed` events from real HASS. Fallback if the spike fails: add `ws` and pass `createSocket` explicitly.
+2. **M2 — HASS state subscription.** Add `home-assistant-js-websocket`; write `server/hass.ts` (~50 LOC) that calls `createConnection({ createSocket: () => new WebSocket(\`${HASS_URL}/api/websocket\`) })`with the long-lived token and exposes`subscribeEntities`, `callService`, `getHistory`. **Spike Bun's `globalThis.WebSocket`against the lib** — the only realistic compat risk. Smoke test: log live`state_changed`events from real HASS. Fallback if the spike fails: add`ws`and pass`createSocket` explicitly.
 3. **M3 — widget framework + Satori render pipeline.** Implement `WidgetSpec` contract, registry, `page-bus`, `devices`, `pager`, and the React → Satori → resvg → Sharp pipeline. Ship `clock`, `sensor-value`, `binary-sensor`, `page-tabs`. `/preview/:device` renders real page HTML; dev meta-refresh updates the browser. ETag-based polling on `/render` (200 or 304). Global 1-minute synthetic tick drives clock widgets.
 4. **M4 — KUAL daemon.** Build `kindle/extensions/kindle-dash/`: `menu.json`, `start.sh`, `stop.sh`, `status.sh`, `loop.sh` (3 s poll, `curl -H 'If-None-Match'`, `eips -g` on 200), `render-once.sh`, `touch-listener.sh` (`evtest` → `/touch`). `install.sh` scp helper. Verify on Kindle: install, Start, screen updates within ~3 s of HASS change.
 5. **M5 — touch + actions + line-graph.** Touch listener posts to `/touch`; server resolves via touchmap; etag in body → 409 for stale taps. Ship `light-toggle`; `page-tabs` interactive. Ship `line-graph` (history fetch, hand-rolled `<svg>`). Dev preview clicks already map to `/touch` from M1 — regression-test here.
@@ -298,5 +329,5 @@ One token end-to-end. The matterbridge plugin receives `DASHBOARD_TOKEN` via the
 7. **`/preview` auth.** Production requires the bearer token even on `/preview` (token-cookie set via `/preview-login?token=`); slight friction for the dev-in-browser story.
 8. **Satori CSS subset.** No Tailwind, no transforms, limited CSS. Already accepted — the Kindle render path always wanted hand-written CSS tuned for 16-grey. Chart widgets (`line-graph`) are hand-rolled `<svg>`, which is actually cleaner than rasterizing a DOM chart library.
 9. **Matterbridge state freshness (M7).** Plugin polling `/state` introduces lag. Mitigation A (preferred): add `/state/ws` that pushes diffs. Mitigation B: 1 s poll + `If-None-Match`. Decide in M7 spike.
-10. **Matter pairing UX (M7).** Matterbridge appears as a *new* Matter bridge in HASS; user adds it via Settings → Matter → Add device → scan QR from matterbridge web UI on port 8283. Document in `fluxcd/README.md`. PVC for `/root/.matterbridge` is mandatory (loses fabric on pod recreate otherwise).
+10. **Matter pairing UX (M7).** Matterbridge appears as a _new_ Matter bridge in HASS; user adds it via Settings → Matter → Add device → scan QR from matterbridge web UI on port 8283. Document in `fluxcd/README.md`. PVC for `/root/.matterbridge` is mandatory (loses fabric on pod recreate otherwise).
 11. **Bun running matterbridge / matter.js (M7).** matterbridge docs say "Node 20+/22+/24 LTS". Likely-fine under Bun: dynamic import, crypto, timers, Buffer, fs. Risky: dgram IPv6 multicast (Matter mDNS commissioning). Mitigation: M7 starts with a 1-day spike (`bun matterbridge --bridge`, attempt pairing). Fallback: install `nodejs` in the image, flip `bun` → `node` in `entrypoint.sh` for the matterbridge line only. Dashboard server stays on Bun regardless.

@@ -30,6 +30,8 @@ onEntitiesChange((entities) => {
   pageBus.onEntitiesChange(entities, entitySetsByDevice);
 });
 
+setInterval(() => pageBus.tick(), 60_000);
+
 function getWidgetEntities(placed: { widget: string; config: unknown }): string[] {
   try {
     const { getWidget } = require('../widgets');
@@ -80,7 +82,7 @@ const server = serve({
         const auth = authMiddleware(req);
         if (auth) return auth;
 
-        const body = await req.json().catch(() => ({})) as Record<string, unknown>;
+        const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
         const device = body.device as string;
 
         if (device && !rateLimit(device)) {

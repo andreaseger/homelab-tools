@@ -2,49 +2,83 @@ import { test, expect, describe } from 'bun:test';
 import { validatePages, validateDevices } from '../server/config';
 
 describe('validatePages', () => {
-  test('accepts valid pages', () => {
-    const pages = [
+  test('valid pages pass', () => {
+    const result = validatePages([
       {
-        id: 'overview',
-        title: 'Overview',
-        layout: [
-          { widget: 'clock', bbox: { x: 0, y: 0, w: 400, h: 80 }, config: { format: '24h' } },
-        ],
+        id: 'test',
+        title: 'Test',
+        layout: [{ widget: 'clock', bbox: { x: 0, y: 0, w: 100, h: 50 }, config: {} }],
       },
-    ];
-    const result = validatePages(pages);
+    ]);
     expect(result).toHaveLength(1);
-    expect(result[0]?.id).toBe('overview');
   });
 
-  test('rejects empty id', () => {
-    expect(() => validatePages([{ id: '', title: 'Test', layout: [] }])).toThrow();
+  test('empty id rejected', () => {
+    expect(() =>
+      validatePages([
+        {
+          id: '',
+          title: 'Test',
+          layout: [{ widget: 'clock', bbox: { x: 0, y: 0, w: 100, h: 50 }, config: {} }],
+        },
+      ])
+    ).toThrow();
   });
 
-  test('rejects missing layout', () => {
+  test('missing layout rejected', () => {
     expect(() => validatePages([{ id: 'test', title: 'Test' }])).toThrow();
+  });
+
+  test('empty layout array rejected', () => {
+    expect(() => validatePages([{ id: 'test', title: 'Test', layout: [] }])).toThrow();
+  });
+
+  test('missing title rejected', () => {
+    expect(() =>
+      validatePages([
+        {
+          id: 'test',
+          layout: [{ widget: 'clock', bbox: { x: 0, y: 0, w: 100, h: 50 }, config: {} }],
+        },
+      ])
+    ).toThrow();
   });
 });
 
 describe('validateDevices', () => {
-  test('accepts valid device', () => {
-    const devices = [
+  test('valid device passes', () => {
+    const result = validateDevices([
       { id: 'kindle1', width: 1072, height: 1448, startPageId: 'overview' },
-    ];
-    const result = validateDevices(devices);
+    ]);
     expect(result).toHaveLength(1);
-    expect(result[0]?.id).toBe('kindle1');
   });
 
-  test('accepts optional rotation', () => {
-    const devices = [
-      { id: 'kindle1', width: 1072, height: 1448, startPageId: 'overview', rotation: '90' },
-    ];
-    const result = validateDevices(devices);
-    expect(result[0]?.rotation).toBe(90);
+  test('rotation transforms correctly', () => {
+    const result = validateDevices([
+      { id: 'k', width: 1072, height: 1448, rotation: '90', startPageId: 'o' },
+    ]);
+    expect(result[0]!.rotation).toBe(90);
   });
 
-  test('rejects negative dimensions', () => {
-    expect(() => validateDevices([{ id: 'k1', width: -100, height: 1448, startPageId: 'x' }])).toThrow();
+  test('negative width rejected', () => {
+    expect(() =>
+      validateDevices([{ id: 'k', width: -100, height: 1448, startPageId: 'o' }])
+    ).toThrow();
+  });
+
+  test('zero width rejected', () => {
+    expect(() =>
+      validateDevices([{ id: 'k', width: 0, height: 1448, startPageId: 'o' }])
+    ).toThrow();
+  });
+
+  test('invalid rotation rejected', () => {
+    expect(() =>
+      validateDevices([{ id: 'k', width: 1072, height: 1448, rotation: '45', startPageId: 'o' }])
+    ).toThrow();
+  });
+
+  test('missing startPageId rejected', () => {
+    expect(() => validateDevices([{ id: 'k', width: 1072, height: 1448 }])).toThrow();
   });
 });

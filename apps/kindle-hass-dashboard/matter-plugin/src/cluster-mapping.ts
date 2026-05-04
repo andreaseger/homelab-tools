@@ -1,6 +1,17 @@
 import { DashboardClient } from './dashboard-client';
 
-const client = new DashboardClient();
+let client: DashboardClient | null = null;
+
+function getClient(): DashboardClient {
+  if (!client) {
+    client = new DashboardClient();
+  }
+  return client;
+}
+
+export function setClient(c: DashboardClient): void {
+  client = c;
+}
 
 let pollInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -16,9 +27,11 @@ function mapBacklightToCommand(value: number): { kind: string; value: number } {
   return { kind: 'set_backlight', value: intensity };
 }
 
-export function startStatePoll(updateCallback: (state: ReturnType<typeof mapStateToAttributes>) => void) {
+export function startStatePoll(
+  updateCallback: (state: ReturnType<typeof mapStateToAttributes>) => void
+) {
   async function poll() {
-    const state = await client.getState();
+    const state = await getClient().getState();
     if (state?.devices?.[0]) {
       const attrs = mapStateToAttributes(state.devices[0]);
       updateCallback(attrs);
@@ -38,9 +51,9 @@ export function stopStatePoll() {
 
 export async function handleBacklightChange(deviceId: string, level: number) {
   const cmd = mapBacklightToCommand(level);
-  return client.postCommand(deviceId, cmd.kind, cmd.value);
+  return getClient().postCommand(deviceId, cmd.kind, cmd.value);
 }
 
 export async function handlePageSwitch(deviceId: string, pageId: string) {
-  return client.postCommand(deviceId, 'set_page', 0);
+  return getClient().postCommandWithBody(deviceId, { kind: 'set_page', pageId });
 }

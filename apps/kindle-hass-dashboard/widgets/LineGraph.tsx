@@ -9,16 +9,11 @@ interface LineGraphConfig {
   bucketMinutes?: number;
 }
 
-interface HistoryPoint {
-  timestamp: number;
-  value: number;
-}
-
 export const LineGraphWidget: WidgetSpec<LineGraphConfig> = {
   id: 'line-graph',
   defaults: { hours: 24, bucketMinutes: 30 },
   entities: (config) => [config.entity],
-  render: (config, _ctx) => {
+  render: async (config, ctx) => {
     const label = config.label ?? config.entity.split('.')[1];
 
     const graphWidth = 600;
@@ -27,14 +22,38 @@ export const LineGraphWidget: WidgetSpec<LineGraphConfig> = {
     const innerW = graphWidth - padding.left - padding.right;
     const innerH = graphHeight - padding.top - padding.bottom;
 
-    const points: HistoryPoint[] = [];
+    const history = await ctx.fetchHistory([config.entity], config.hours);
+
+    const bucketMs = (config.bucketMinutes ?? 30) * 60 * 1000;
     const now = Date.now();
     const startTime = now - config.hours * 60 * 60 * 1000;
-    const bucketMs = (config.bucketMinutes ?? 30) * 60 * 1000;
 
+    const buckets = new Map<number, { sum: number; count: number }>();
+    for (const point of history) {
+      const bucketKey = Math.floor((point.timestamp - startTime) / bucketMs);
+      const existing = buckets.get(bucketKey) ?? { sum: 0, count: 0 };
+      existing.sum += point.value;
+      existing.count++;
+      buckets.set(bucketKey, existing);
+    }
+
+    const points: { timestamp: number; value: number }[] = [];
     for (let t = startTime; t < now; t += bucketMs) {
-      const fakeVal = 15 + 10 * Math.sin((t - startTime) / (config.hours * 60 * 60 * 1000) * Math.PI * 2);
-      points.push({ timestamp: t, value: fakeVal });
+      const bucketKey = Math.floor((t - startTime) / bucketMs);
+      const bucket = buckets.get(bucketKey);
+      if (bucket && bucket.count > 0) {
+        points.push({ timestamp: t, value: bucket.sum / bucket.count });
+      }
+    }
+
+    if (points.length === 0) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 8 }}>
+          <text style={{ fontSize: 14, fill: '#808080', fontFamily: 'sans-serif' }}>
+            No data for {label}
+          </text>
+        </div>
+      );
     }
 
     const yMin = config.yMin ?? Math.min(...points.map((p) => p.value)) - 2;
@@ -45,7 +64,9 @@ export const LineGraphWidget: WidgetSpec<LineGraphConfig> = {
     const toY = (v: number) => padding.top + innerH - ((v - yMin) / yRange) * innerH;
 
     const pathD = points
-      .map((p, i) => `${i === 0 ? 'M' : 'L'} ${toX(p.timestamp).toFixed(1)} ${toY(p.value).toFixed(1)}`)
+      .map(
+        (p, i) => `${i === 0 ? 'M' : 'L'} ${toX(p.timestamp).toFixed(1)} ${toY(p.value).toFixed(1)}`
+      )
       .join(' ');
 
     const gridLines = [];

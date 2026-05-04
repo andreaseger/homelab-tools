@@ -47,13 +47,15 @@ export const PageTabsWidget: WidgetSpec<PageTabsConfig> = {
     });
 
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'row',
-        border: '2px solid #808080',
-        borderRadius: 4,
-        overflow: 'hidden',
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          border: '2px solid #808080',
+          borderRadius: 4,
+          overflow: 'hidden',
+        }}
+      >
         {tabs}
       </div>
     );

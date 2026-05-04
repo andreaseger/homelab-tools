@@ -8,6 +8,14 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["server/**/*.ts", "server/**/*.tsx", "widgets/**/*.ts", "widgets/**/*.tsx", "shared/**/*.ts", "config/**/*.ts", "test/**/*.ts"],
+  "include": [
+    "server/**/*.ts",
+    "server/**/*.tsx",
+    "widgets/**/*.ts",
+    "widgets/**/*.tsx",
+    "shared/**/*.ts",
+    "config/**/*.ts",
+    "test/**/*.ts"
+  ],
   "exclude": ["node_modules"]
 }

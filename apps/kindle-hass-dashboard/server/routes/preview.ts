@@ -7,7 +7,8 @@ export async function servePreview(device: string): Promise<Response> {
   const b64 = Buffer.from(result.png).toString('base64');
   const isDev = process.env.NODE_ENV !== 'production';
 
-  return new Response(`<!DOCTYPE html>
+  return new Response(
+    `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -35,7 +36,9 @@ document.addEventListener('click', async (e) => {
 <body>
 <img src="data:image/png;base64,${b64}" data-etag="${result.etag}" alt="Dashboard preview">
 </body>
-</html>`, {
-    headers: { 'Content-Type': 'text/html; charset=utf-8' },
-  });
+</html>`,
+    {
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    }
+  );
 }

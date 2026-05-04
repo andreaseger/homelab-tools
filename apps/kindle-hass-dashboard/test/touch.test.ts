@@ -35,4 +35,32 @@ describe('handleTouch', () => {
     expect(result.status).toBe(200);
     expect(result.body).toEqual({ action: 'noop' });
   });
+
+  test('navigate action changes page', async () => {
+    const state = devices.getState('touch-nav-test');
+    state.currentEtag = '"nav"';
+    state.currentPage = 'overview';
+    state.touchmap = [
+      { bbox: { x: 0, y: 0, w: 500, h: 100 }, action: { kind: 'navigate', pageId: 'lights' } },
+    ];
+
+    const result = await handleTouch({ device: 'touch-nav-test', x: 100, y: 50, etag: '"nav"' });
+    expect(result.status).toBe(200);
+    expect(result.body).toEqual({ action: 'navigate' });
+    expect(state.currentPage).toBe('lights');
+  });
+
+  test('no etag provided skips etag check', async () => {
+    const state = devices.getState('touch-no-etag');
+    state.currentEtag = '"some-etag"';
+    state.touchmap = [{ bbox: { x: 0, y: 0, w: 100, h: 100 }, action: { kind: 'noop' } }];
+
+    const result = await handleTouch({ device: 'touch-no-etag', x: 50, y: 50 });
+    expect(result.status).toBe(200);
+  });
+
+  test('auto-creates state for unknown device', async () => {
+    const result = await handleTouch({ device: 'brand-new-touch-device', x: 50, y: 50 });
+    expect(result.status).toBe(200);
+  });
 });

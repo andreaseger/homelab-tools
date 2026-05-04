@@ -7,6 +7,7 @@ class DeviceState {
   touchmap: ActionHotZone[];
   lastEntityValues: Record<string, unknown>;
   lastRenderAt: number;
+  paused: boolean;
 
   constructor(public readonly profile: DeviceProfile) {
     this.currentPage = profile.startPageId;
@@ -14,14 +15,13 @@ class DeviceState {
     this.touchmap = [];
     this.lastEntityValues = {};
     this.lastRenderAt = 0;
+    this.paused = false;
   }
 }
 
 class DeviceRegistry {
   private states = new Map<DeviceId, DeviceState>();
-  private profiles = new Map<DeviceId, DeviceProfile>(
-    deviceProfiles.map((p) => [p.id, p])
-  );
+  private profiles = new Map<DeviceId, DeviceProfile>(deviceProfiles.map((p) => [p.id, p]));
 
   getProfile(deviceId: string): DeviceProfile {
     const profile = this.profiles.get(deviceId);
@@ -48,6 +48,16 @@ class DeviceRegistry {
 
   list(): DeviceProfile[] {
     return Array.from(this.profiles.values());
+  }
+
+  setPaused(deviceId: string, paused: boolean): void {
+    const state = this.getState(deviceId);
+    state.paused = paused;
+  }
+
+  setPage(deviceId: string, pageId: string): void {
+    const state = this.getState(deviceId);
+    state.currentPage = pageId;
   }
 }
 
