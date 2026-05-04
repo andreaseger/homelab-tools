@@ -3,6 +3,8 @@ import { serveHealth } from './routes/health';
 import { createRenderResult } from './routes/render';
 import { handleTouch } from './routes/touch';
 import { servePreview } from './routes/preview';
+import { serveState } from './routes/state';
+import { serveCommand } from './routes/command';
 import { pageBus } from './page-bus';
 import { onEntitiesChange } from './hass';
 import { devices } from './devices';
@@ -11,6 +13,7 @@ import { authMiddleware } from './auth';
 import { rateLimit } from './rate-limit';
 
 const PORT = parseInt(process.env.PORT ?? '8080', 10);
+const EXPOSE_ENABLED = process.env.EXPOSE_ENABLED === 'true';
 
 onEntitiesChange((entities) => {
   const entitySetsByDevice = new Map<string, Set<string>>();
@@ -98,6 +101,26 @@ const server = serve({
         return servePreview(device);
       },
     },
+
+    '/state': {
+      GET(req) {
+        if (!EXPOSE_ENABLED) return new Response('Not found', { status: 404 });
+        const auth = authMiddleware(req);
+        if (auth) return auth;
+        return serveState();
+      },
+    },
+
+    '/command': {
+      async GET(req) {
+        if (!EXPOSE_ENABLED) return new Response('Not found', { status: 404 });
+        return serveCommand(req);
+      },
+      async POST(req) {
+        if (!EXPOSE_ENABLED) return new Response('Not found', { status: 404 });
+        return serveCommand(req);
+      },
+    },
   },
 
   fetch(_req, _server) {
@@ -111,3 +134,6 @@ const server = serve({
 });
 
 console.log(`📱 Kindle HASS Dashboard running at ${server.url}`);
+if (EXPOSE_ENABLED) {
+  console.log('🔌 M7 Matterbridge routes (/state, /command) enabled');
+}

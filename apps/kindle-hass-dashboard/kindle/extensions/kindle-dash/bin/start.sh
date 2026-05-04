@@ -20,5 +20,9 @@ echo $! > /var/run/kindle-dash/render.pid
 $DIR/bin/touch-listener.sh &
 echo $! > /var/run/kindle-dash/touch.pid
 
+# Start command listener in background (M7)
+$DIR/bin/command-listener.sh &
+echo $! > /var/run/kindle-dash/command.pid
+
 eips "Dashboard started"
 sleep 1
