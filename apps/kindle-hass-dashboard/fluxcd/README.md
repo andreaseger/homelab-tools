@@ -32,3 +32,16 @@ kubectl apply -k fluxcd/
 | `DASHBOARD_TOKEN` | Bearer token for Kindle daemon auth                                                    |
 | `PORT`            | Server port (default: 8080)                                                            |
 | `NODE_ENV`        | `production` or `development`                                                          |
+| `EXPOSE_ENABLED`  | `true` to expose the dashboard to HASS as a Matter device (off by default)             |
+| `MATTERBRIDGE_DIR`| Where matterbridge stores commissioning state (defaults to `/root/.matterbridge`)      |
+
+## Matter exposure (optional)
+
+Set `EXPOSE_ENABLED=true` on the deployment to start matterbridge alongside the
+server. Caveats:
+
+- Matter commissioning relies on mDNS, which doesn't work through a CNI by
+  default. Patch the deployment with `hostNetwork: true` and
+  `dnsPolicy: ClusterFirstWithHostNet` if you want HASS to discover the bridge.
+- Commissioning state lives on the `kindle-hass-dashboard-matter` PVC. Don't
+  delete it unless you intend to re-commission.

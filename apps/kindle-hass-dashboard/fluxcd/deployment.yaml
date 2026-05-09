@@ -30,6 +30,12 @@ spec:
               value: 'production'
             - name: PORT
               value: '8080'
+            # Set to 'true' to expose the dashboard back to HASS via Matter.
+            # Requires hostNetwork: true on this pod for mDNS to work.
+            - name: EXPOSE_ENABLED
+              value: 'false'
+            - name: MATTERBRIDGE_DIR
+              value: /root/.matterbridge
             - name: HASS_URL
               valueFrom:
                 secretKeyRef:
@@ -45,6 +51,9 @@ spec:
                 secretKeyRef:
                   name: kindle-hass-dashboard
                   key: DASHBOARD_TOKEN
+          volumeMounts:
+            - name: matter
+              mountPath: /root/.matterbridge
           livenessProbe:
             httpGet:
               path: /health
@@ -70,6 +79,10 @@ spec:
             requests:
               cpu: 100m
               memory: 64Mi
+      volumes:
+        - name: matter
+          persistentVolumeClaim:
+            claimName: kindle-hass-dashboard-matter
 ---
 apiVersion: v1
 kind: Service
