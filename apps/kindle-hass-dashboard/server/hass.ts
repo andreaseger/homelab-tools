@@ -29,8 +29,20 @@ function wsUrl(): string {
 async function createHassSocket(): Promise<WebSocket> {
   return new Promise<WebSocket>((resolve, reject) => {
     const ws = new WebSocket(wsUrl());
-    ws.addEventListener('open', () => resolve(ws));
-    ws.addEventListener('error', (err) => reject(err));
+    const cleanup = () => {
+      ws.removeEventListener('open', onOpen);
+      ws.removeEventListener('error', onError);
+    };
+    const onOpen = () => {
+      cleanup();
+      resolve(ws);
+    };
+    const onError = (err: Event) => {
+      cleanup();
+      reject(err);
+    };
+    ws.addEventListener('open', onOpen);
+    ws.addEventListener('error', onError);
   });
 }
 

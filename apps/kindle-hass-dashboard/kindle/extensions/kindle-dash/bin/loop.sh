@@ -6,23 +6,23 @@ CONF="$DIR/etc/kindle-dash.conf"
 
 ETAG=""
 OUT_PNG="/var/tmp/kindle-dash-out.png"
+HEADERS="/var/tmp/kindle-dash-headers.txt"
 
 while true; do
     if [ -n "$ETAG" ]; then
-        RESP=$(curl -s -w "\n%{http_code}" -H "If-None-Match: $ETAG" \
+        HTTP_CODE=$(curl -s -D "$HEADERS" -w "%{http_code}" \
+            -H "If-None-Match: $ETAG" \
             -H "Authorization: Bearer $TOKEN" \
             "$SERVER_URL/render?device=$DEVICE_ID" -o "$OUT_PNG" 2>/dev/null)
     else
-        RESP=$(curl -s -w "\n%{http_code}" \
+        HTTP_CODE=$(curl -s -D "$HEADERS" -w "%{http_code}" \
             -H "Authorization: Bearer $TOKEN" \
             "$SERVER_URL/render?device=$DEVICE_ID" -o "$OUT_PNG" 2>/dev/null)
     fi
 
-    HTTP_CODE=$(echo "$RESP" | tail -1)
-
     if [ "$HTTP_CODE" = "200" ]; then
-        ETAG=$(curl -s -I -H "Authorization: Bearer $TOKEN" \
-            "$SERVER_URL/render?device=$DEVICE_ID" 2>/dev/null | grep -i etag | tr -d '\r' | awk '{print $2}')
+        NEW_ETAG=$(grep -i '^etag:' "$HEADERS" | tr -d '\r' | awk '{print $2}')
+        [ -n "$NEW_ETAG" ] && ETAG="$NEW_ETAG"
         eips -g "$OUT_PNG"
     fi
 
