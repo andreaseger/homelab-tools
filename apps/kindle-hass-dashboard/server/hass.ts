@@ -19,40 +19,9 @@ function restUrl(): string {
   return HASS_URL!;
 }
 
-function wsUrl(): string {
-  const url = new URL(HASS_URL!);
-  url.pathname = '/api/websocket';
-  url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-  return url.toString();
-}
-
-async function createHassSocket(): Promise<WebSocket> {
-  return new Promise<WebSocket>((resolve, reject) => {
-    const ws = new WebSocket(wsUrl());
-    const cleanup = () => {
-      ws.removeEventListener('open', onOpen);
-      ws.removeEventListener('error', onError);
-    };
-    const onOpen = () => {
-      cleanup();
-      resolve(ws);
-    };
-    const onError = (err: Event) => {
-      cleanup();
-      reject(err);
-    };
-    ws.addEventListener('open', onOpen);
-    ws.addEventListener('error', onError);
-  });
-}
-
 async function connect(): Promise<Connection> {
   const auth = createLongLivedTokenAuth(restUrl(), HASS_TOKEN!);
-
-  const c = await createConnection({
-    auth,
-    createSocket: async () => (await createHassSocket()) as WebSocket & { haVersion: string },
-  });
+  const c = await createConnection({ auth });
 
   subscribeEntities(c, (entities) => {
     latestEntities = entities;

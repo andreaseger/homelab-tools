@@ -25,8 +25,10 @@ COPY --parents --from=workspace apps/*/package.json ./
 # produces a flat node_modules for the Bun runtime stage.
 RUN pnpm install --filter=@ohoio/kindle-hass-dashboard... --frozen-lockfile --config.node-linker=isolated
 
-# Produce an isolated prod-only deploy bundle
-RUN pnpm deploy --filter=@ohoio/kindle-hass-dashboard --prod /deploy
+# Produce a flat prod-only deploy bundle. Forcing hoisted here is required for
+# matterbridge: it self-locates package.json relative to its dist/ and breaks
+# on pnpm's .pnpm/<pkg>/node_modules/<pkg> indirection from isolated layout.
+RUN pnpm deploy --filter=@ohoio/kindle-hass-dashboard --prod --config.node-linker=hoisted /deploy
 
 # ---- Production Stage ----
 FROM oven/bun:1.3.13
