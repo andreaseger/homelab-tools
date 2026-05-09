@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.10
+# syntax=docker/dockerfile:1-labs
 
 # ---- Builder Stage ----
 FROM node:22-slim AS builder
