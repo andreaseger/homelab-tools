@@ -5,15 +5,17 @@ RUN corepack enable pnpm
 
 WORKDIR /app
 
-# Copy workspace config for pnpm install
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
-COPY apps/homelab-k8s-dashboard/package.json apps/homelab-k8s-dashboard/
+# Copy workspace config + all workspace member manifests so pnpm can resolve the lockfile
+COPY --from=workspace package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY --from=workspace apps/api-portal/package.json apps/api-portal/
+COPY --from=workspace apps/obsidian-syncer/package.json apps/obsidian-syncer/
+COPY --from=workspace apps/homelab-k8s-dashboard/package.json apps/homelab-k8s-dashboard/
 
 RUN pnpm install --frozen-lockfile
 
-COPY apps/homelab-k8s-dashboard/src apps/homelab-k8s-dashboard/src
-COPY apps/homelab-k8s-dashboard/tsconfig*.json apps/homelab-k8s-dashboard/
-COPY apps/homelab-k8s-dashboard/vite.config.ts apps/homelab-k8s-dashboard/
+COPY --from=workspace apps/homelab-k8s-dashboard/src apps/homelab-k8s-dashboard/src
+COPY --from=workspace apps/homelab-k8s-dashboard/tsconfig*.json apps/homelab-k8s-dashboard/
+COPY --from=workspace apps/homelab-k8s-dashboard/vite.config.ts apps/homelab-k8s-dashboard/
 
 # Type-check and emit server JS; bundle client with Vite
 RUN cd apps/homelab-k8s-dashboard && \
@@ -27,8 +29,10 @@ RUN corepack enable pnpm
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
-COPY apps/homelab-k8s-dashboard/package.json apps/homelab-k8s-dashboard/
+COPY --from=workspace package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY --from=workspace apps/api-portal/package.json apps/api-portal/
+COPY --from=workspace apps/obsidian-syncer/package.json apps/obsidian-syncer/
+COPY --from=workspace apps/homelab-k8s-dashboard/package.json apps/homelab-k8s-dashboard/
 
 RUN pnpm install --frozen-lockfile
 
