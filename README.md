@@ -4,14 +4,11 @@ A monorepo of containerized applications and utilities for homelab infrastructur
 
 ## Getting Started
 
-This workspace uses [Nx](https://nx.dev) for task orchestration and [Bun](https://bun.sh) as the JavaScript runtime. PNPM is used for package management. Nx manages the project graph, task dependencies, and caching — there are no npm/pnpm workspaces. Each app maintains its own `pnpm-lock.yaml` and `node_modules`, keeping dependency trees independent and Docker builds self-contained.
+This workspace uses [Nx](https://nx.dev) for task orchestration, [PNPM workspaces](https://pnpm.io/workspaces) for package management, and [Bun](https://bun.sh) as the JavaScript runtime. A single root `pnpm-lock.yaml` covers all apps; per-app Docker builds isolate dependencies via `pnpm install --filter=<pkg>... --config.node-linker=isolated` followed by `pnpm deploy`.
 
 ```sh
-# Install root tooling (nx, eslint, prettier, husky)
+# Install all dependencies (workspace-wide)
 pnpm install
-
-# Install dependencies for a specific app
-cd apps/<app> && pnpm install
 
 # Run tasks
 pnpm nx run <project>:<target>
@@ -24,7 +21,9 @@ pnpm nx graph
 
 ### Apps
 
+- **[api-portal](apps/api-portal)** - OpenAPI / AsyncAPI specification portal
 - **[homelab-k8s-dashboard](apps/homelab-k8s-dashboard)** - K8s dashboard showing deployed container images and Helm charts (Vue 3 + Express 5)
+- **[kindle-hass-dashboard](apps/kindle-hass-dashboard)** - E-ink Home Assistant dashboard rendered for Kindle, with optional Matter bridge for self-exposure
 - **[obsidian-syncer](apps/obsidian-syncer)** - Headless Obsidian vault sync service
 
 ## Common Tasks
@@ -47,8 +46,7 @@ pnpm nx format
 
 The workspace uses GitHub Actions for continuous integration with **Nx affected detection**.
 
-- **CI Pipeline**: `.github/workflows/ci.yml` - Runs tests and linting on affected projects
-- **Container Builds**: `.github/workflows/container-build.yml` - Builds and pushes only affected Docker images
+- **CI Pipeline**: `.github/workflows/ci.yml` — runs lint/test/build/typecheck on affected projects, then builds and pushes Docker images for affected apps in the same workflow (gated on CI passing).
 
 ### How Affected Detection Works
 
@@ -70,14 +68,18 @@ The workflows use [`nrwl/nx-set-shas`](https://github.com/nrwl/nx-set-shas) to t
 
 ```
 homelab-tools/
-├── apps/                  # Applications (each with own pnpm-lock.yaml)
+├── apps/
+│   ├── api-portal/
 │   ├── homelab-k8s-dashboard/
+│   ├── kindle-hass-dashboard/
 │   └── obsidian-syncer/
 ├── .github/               # CI/CD workflows
 ├── .husky/                # Pre-commit hooks (prettier + eslint)
 ├── eslint.config.js       # Root ESLint flat config
 ├── nx.json                # Nx workspace configuration
-└── package.json           # Root tooling deps (no workspaces)
+├── pnpm-workspace.yaml    # PNPM workspace member globs
+├── pnpm-lock.yaml         # Single workspace lockfile
+└── package.json           # Root tooling deps
 ```
 
 ## Learn More

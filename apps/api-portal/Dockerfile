@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.10
+
 # ---- Builder Stage ----
 FROM node:22-slim AS builder
 
@@ -11,11 +13,11 @@ RUN corepack enable pnpm
 
 WORKDIR /app
 
-# Copy workspace config + all member manifests (required for --frozen-lockfile validation)
+# Copy workspace config + all member manifests (required for --frozen-lockfile validation).
+# --parents preserves the apps/<name>/ structure pnpm needs, so adding a new app
+# under apps/ is picked up automatically without editing any Dockerfile.
 COPY --from=workspace package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
-COPY --from=workspace apps/api-portal/package.json apps/api-portal/
-COPY --from=workspace apps/obsidian-syncer/package.json apps/obsidian-syncer/
-COPY --from=workspace apps/homelab-k8s-dashboard/package.json apps/homelab-k8s-dashboard/
+COPY --parents --from=workspace apps/*/package.json ./
 
 # Install only this app's dependency closure
 # node-linker=isolated overrides .npmrc's workspace-wide hoisted setting so

@@ -1,27 +1,42 @@
-FROM node:22-slim AS deps
+# syntax=docker/dockerfile:1.10
+
+# ---- Builder Stage ----
+FROM node:22-slim AS builder
+
+# Build deps for native modules pulled in by matterbridge / matter.js
+# when no prebuilt binary exists for the target arch.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3 make g++ \
+ && rm -rf /var/lib/apt/lists/*
 
 RUN corepack enable pnpm
 
 WORKDIR /app
 
+# Copy workspace config + all member manifests (required for --frozen-lockfile validation).
+# --parents preserves the apps/<name>/ structure pnpm needs, so adding a new app
+# under apps/ is picked up automatically without editing any Dockerfile.
 COPY --from=workspace package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
-COPY --from=workspace apps/api-portal/package.json apps/api-portal/
-COPY --from=workspace apps/obsidian-syncer/package.json apps/obsidian-syncer/
-COPY --from=workspace apps/homelab-k8s-dashboard/package.json apps/homelab-k8s-dashboard/
-COPY --from=workspace apps/kindle-hass-dashboard/package.json apps/kindle-hass-dashboard/
+COPY --parents --from=workspace apps/*/package.json ./
 
-RUN pnpm install --frozen-lockfile
+# Install only this app's dependency closure — sibling apps' native deps are skipped
+# node-linker=isolated overrides .npmrc's workspace-wide hoisted setting so
+# --filter actually excludes sibling apps' deps; pnpm deploy below still
+# produces a flat node_modules for the Bun runtime stage.
+RUN pnpm install --filter=@ohoio/kindle-hass-dashboard... --frozen-lockfile --config.node-linker=isolated
 
+# Produce an isolated prod-only deploy bundle
 RUN pnpm deploy --filter=@ohoio/kindle-hass-dashboard --prod /deploy
 
-FROM oven/bun:1
+# ---- Production Stage ----
+FROM oven/bun:1.3.13
 
-LABEL org.opencontainers.image.source="https://github.com/ane/homelab-tools"
+LABEL org.opencontainers.image.source="https://github.com/andreaseger/homelab-tools"
 LABEL org.opencontainers.image.description="Kindle Paperwhite HASS Dashboard Service"
 
 WORKDIR /app
 
-COPY --from=deps /deploy/node_modules ./node_modules
+COPY --from=builder /deploy/node_modules ./node_modules
 
 COPY server ./server
 COPY widgets ./widgets

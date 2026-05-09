@@ -25,15 +25,15 @@ kubectl apply -k fluxcd/
 
 ## Configuration
 
-| Env Var           | Description                                                                            |
-| ----------------- | -------------------------------------------------------------------------------------- |
-| `HASS_URL`        | Internal URL to Home Assistant (e.g., `http://home-assistant.home-assistant.svc:8123`) |
-| `HASS_TOKEN`      | HASS long-lived access token                                                           |
-| `DASHBOARD_TOKEN` | Bearer token for Kindle daemon auth                                                    |
-| `PORT`            | Server port (default: 8080)                                                            |
-| `NODE_ENV`        | `production` or `development`                                                          |
-| `EXPOSE_ENABLED`  | `true` to expose the dashboard to HASS as a Matter device (off by default)             |
-| `MATTERBRIDGE_DIR`| Where matterbridge stores commissioning state (defaults to `/root/.matterbridge`)      |
+| Env Var            | Description                                                                            |
+| ------------------ | -------------------------------------------------------------------------------------- |
+| `HASS_URL`         | Internal URL to Home Assistant (e.g., `http://home-assistant.home-assistant.svc:8123`) |
+| `HASS_TOKEN`       | HASS long-lived access token                                                           |
+| `DASHBOARD_TOKEN`  | Bearer token for Kindle daemon auth                                                    |
+| `PORT`             | Server port (default: 8080)                                                            |
+| `NODE_ENV`         | `production` or `development`                                                          |
+| `EXPOSE_ENABLED`   | `true` to expose the dashboard to HASS as a Matter device (off by default)             |
+| `MATTERBRIDGE_DIR` | Where matterbridge stores commissioning state (defaults to `/root/.matterbridge`)      |
 
 ## Matter exposure (optional)
 
