@@ -18,7 +18,10 @@ COPY --from=workspace apps/obsidian-syncer/package.json apps/obsidian-syncer/
 COPY --from=workspace apps/homelab-k8s-dashboard/package.json apps/homelab-k8s-dashboard/
 
 # Install only this app's dependency closure
-RUN pnpm install --filter=@apps/obsidian-syncer... --frozen-lockfile
+# node-linker=isolated overrides .npmrc's workspace-wide hoisted setting so
+# --filter actually excludes sibling apps' deps; pnpm deploy below still
+# produces a flat node_modules for the Bun runtime stage.
+RUN pnpm install --filter=@apps/obsidian-syncer... --frozen-lockfile --config.node-linker=isolated
 
 # Produce an isolated prod-only deploy bundle
 RUN pnpm deploy --filter=@apps/obsidian-syncer --prod /deploy

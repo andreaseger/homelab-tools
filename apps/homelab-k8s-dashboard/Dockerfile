@@ -12,16 +12,19 @@ COPY --from=workspace apps/obsidian-syncer/package.json apps/obsidian-syncer/
 COPY --from=workspace apps/homelab-k8s-dashboard/package.json apps/homelab-k8s-dashboard/
 
 # Install only this app's dependency closure — sibling apps' native deps are skipped
-RUN pnpm install --filter=@apps/homelab-k8s-dashboard... --frozen-lockfile
+# node-linker=isolated overrides .npmrc's workspace-wide hoisted setting so
+# --filter actually excludes sibling apps' deps; pnpm deploy below still
+# produces a flat node_modules for the Bun runtime stage.
+RUN pnpm install --filter=@apps/homelab-k8s-dashboard... --frozen-lockfile --config.node-linker=isolated
 
 COPY --from=workspace apps/homelab-k8s-dashboard/src apps/homelab-k8s-dashboard/src
 COPY --from=workspace apps/homelab-k8s-dashboard/tsconfig*.json apps/homelab-k8s-dashboard/
 COPY --from=workspace apps/homelab-k8s-dashboard/vite.config.ts apps/homelab-k8s-dashboard/
 
-# Type-check and emit server JS; bundle client with Vite
-RUN cd apps/homelab-k8s-dashboard && \
-    /app/node_modules/.bin/vue-tsc --build && \
-    /app/node_modules/.bin/vite build
+# Type-check and emit server JS; bundle client with Vite. With isolated
+# node-linker, binaries live under the app's own node_modules/.bin.
+RUN pnpm --filter=@apps/homelab-k8s-dashboard exec vue-tsc --build \
+ && pnpm --filter=@apps/homelab-k8s-dashboard exec vite build
 
 # Produce an isolated prod-only deploy bundle
 RUN pnpm deploy --filter=@apps/homelab-k8s-dashboard --prod /deploy
