@@ -10,6 +10,18 @@ Use PNPM for package management and Bun as the runtime.
 - Use `pnpm dlx <package> <command>` instead of `npx`
 - Use `pnpm deploy --filter=<package> --prod <dir>` for isolated Docker builds
 
+### Dockerfile pattern for monorepo apps
+
+To avoid pulling sibling apps' (often native) deps into every image:
+
+- The CI workflow (`.github/workflows/ci.yml`) sets `context: apps/<app>` and exposes the repo root as a named build context (`build-contexts: workspace=.`). Reference workspace files via `COPY --from=workspace ...`.
+- Copy the workspace config (`package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc`) **and every workspace member's `package.json`** — `--frozen-lockfile` validates against all of them, even when filtering.
+- Install with `pnpm install --filter=<pkg>... --frozen-lockfile` (note the trailing `...` — includes the package's transitive workspace deps). Only that closure is materialized, so unrelated apps' native modules never compile here.
+- Produce the runtime bundle with `pnpm deploy --filter=<pkg> --prod /deploy` in the same builder stage; final stage just `COPY --from=builder /deploy/node_modules` plus the app's built artifacts. No separate `prod-deps` stage needed.
+- Only add `python3 make g++` (for `node-gyp`) when the app's own dep closure actually contains a native module without a prebuilt binary for the target arch. Pure-JS apps need none.
+
+See `apps/homelab-k8s-dashboard/Dockerfile` (pure-JS) and `apps/api-portal/Dockerfile` (native deps) as reference templates when creating a new app.
+
 ### Runtime (Bun)
 
 - Use `bun <file>` instead of `node <file>` or `ts-node <file>`
