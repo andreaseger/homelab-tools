@@ -21,7 +21,7 @@ trap cleanup TERM INT
 
 if [ "${EXPOSE_ENABLED:-false}" = "true" ]; then
   echo "Starting matterbridge..."
-  bun /app/node_modules/matterbridge/dist/cjs/cli.js --add /app/matter-plugin --bridge &
+  bun run /app/node_modules/matterbridge/bin/matterbridge.js --add /app/matter-plugin --bridge &
   MATTERBRIDGE_PID=$!
   echo "matterbridge started (PID: $MATTERBRIDGE_PID)"
 fi
