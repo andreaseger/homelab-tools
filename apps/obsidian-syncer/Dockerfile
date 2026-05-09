@@ -29,7 +29,7 @@ RUN pnpm deploy --filter=@apps/obsidian-syncer --prod /deploy
 # ---- Production Stage ----
 FROM oven/bun:1.3.13
 
-LABEL org.opencontainers.image.source="https://github.com/ane/homelab-tools"
+LABEL org.opencontainers.image.source="https://github.com/andreaseger/homelab-tools"
 LABEL org.opencontainers.image.description="Headless Obsidian vault sync"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \

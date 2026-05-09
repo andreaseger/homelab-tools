@@ -29,7 +29,7 @@ RUN pnpm deploy --filter=@ohoio/api-portal --prod /deploy
 # ---- Production Stage ----
 FROM oven/bun:1.3.13
 
-LABEL org.opencontainers.image.source="https://github.com/ane/homelab-tools"
+LABEL org.opencontainers.image.source="https://github.com/andreaseger/homelab-tools"
 LABEL org.opencontainers.image.description="API Portal for OpenAPI and AsyncAPI specifications"
 
 WORKDIR /app
