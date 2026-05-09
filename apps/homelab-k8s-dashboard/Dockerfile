@@ -1,6 +1,12 @@
 # ---- Builder Stage ----
 FROM node:22-slim AS builder
 
+# Build deps for native modules (better-sqlite3, tree-sitter) compiled by sibling
+# workspace packages during pnpm install when no prebuilt binary exists (notably arm64).
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3 make g++ \
+ && rm -rf /var/lib/apt/lists/*
+
 RUN corepack enable pnpm
 
 WORKDIR /app
@@ -24,6 +30,10 @@ RUN cd apps/homelab-k8s-dashboard && \
 
 # ---- Production dependencies ----
 FROM node:22-slim AS prod-deps
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3 make g++ \
+ && rm -rf /var/lib/apt/lists/*
 
 RUN corepack enable pnpm
 
