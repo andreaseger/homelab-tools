@@ -2,7 +2,7 @@
   "name": "@ohoio/source",
   "version": "0.0.0",
   "license": "MIT",
-  "packageManager": "pnpm@10.18.3",
+  "packageManager": "pnpm@11.0.9",
   "scripts": {},
   "private": true,
   "devDependencies": {

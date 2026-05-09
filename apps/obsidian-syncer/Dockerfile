@@ -27,7 +27,7 @@ RUN pnpm install --filter=@apps/obsidian-syncer... --frozen-lockfile --config.no
 RUN pnpm deploy --filter=@apps/obsidian-syncer --prod /deploy
 
 # ---- Production Stage ----
-FROM oven/bun:1
+FROM oven/bun:1.3.13
 
 LABEL org.opencontainers.image.source="https://github.com/ane/homelab-tools"
 LABEL org.opencontainers.image.description="Headless Obsidian vault sync"

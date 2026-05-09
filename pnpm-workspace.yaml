@@ -1,3 +1,22 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+# Use the legacy `pnpm deploy` algorithm (not the inject-based one) so isolated
+# Docker bundles work without setting inject-workspace-packages=true.
+forceLegacyDeploy: true
+
+# pnpm 11 requires an explicit allowlist for postinstall/build scripts.
+# All entries here are required (native compilation or first-party tools);
+# @scarf/scarf is analytics-only and core-js-pure ships prebuilt, so they're denied.
+allowBuilds:
+  '@scarf/scarf': false
+  '@tree-sitter-grammars/tree-sitter-yaml': true
+  better-sqlite3: true
+  bun: true
+  core-js-pure: false
+  esbuild: true
+  nx: true
+  protobufjs: true
+  tree-sitter: true
+  tree-sitter-json: true

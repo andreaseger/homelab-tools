@@ -30,7 +30,7 @@ RUN pnpm --filter=@apps/homelab-k8s-dashboard exec vue-tsc --build \
 RUN pnpm deploy --filter=@apps/homelab-k8s-dashboard --prod /deploy
 
 # ---- Production Stage ----
-FROM oven/bun:1
+FROM oven/bun:1.3.13
 
 LABEL org.opencontainers.image.source="https://github.com/ane/homelab-tools"
 LABEL org.opencontainers.image.description="K8s dashboard showing deployed container images and helm charts"
