@@ -2,9 +2,10 @@ packages:
   - "apps/*"
   - "packages/*"
 
-# Use the legacy `pnpm deploy` algorithm (not the inject-based one) so isolated
-# Docker bundles work without setting inject-workspace-packages=true.
-forceLegacyDeploy: true
+# Required by `pnpm deploy` (pnpm 10+) — none of our apps actually consume sibling
+# workspace packages, so injection is a no-op for us, but the deploy algorithm
+# refuses to run without it set.
+injectWorkspacePackages: true
 
 # pnpm 11 requires an explicit allowlist for postinstall/build scripts.
 # All entries here are required (native compilation or first-party tools);
