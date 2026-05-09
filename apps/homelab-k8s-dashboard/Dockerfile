@@ -1,23 +1,18 @@
 # ---- Builder Stage ----
 FROM node:22-slim AS builder
 
-# Build deps for native modules (better-sqlite3, tree-sitter) compiled by sibling
-# workspace packages during pnpm install when no prebuilt binary exists (notably arm64).
-RUN apt-get update \
- && apt-get install -y --no-install-recommends python3 make g++ \
- && rm -rf /var/lib/apt/lists/*
-
 RUN corepack enable pnpm
 
 WORKDIR /app
 
-# Copy workspace config + all workspace member manifests so pnpm can resolve the lockfile
+# Copy workspace config + all member manifests (required for --frozen-lockfile validation)
 COPY --from=workspace package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY --from=workspace apps/api-portal/package.json apps/api-portal/
 COPY --from=workspace apps/obsidian-syncer/package.json apps/obsidian-syncer/
 COPY --from=workspace apps/homelab-k8s-dashboard/package.json apps/homelab-k8s-dashboard/
 
-RUN pnpm install --frozen-lockfile
+# Install only this app's dependency closure — sibling apps' native deps are skipped
+RUN pnpm install --filter=@apps/homelab-k8s-dashboard... --frozen-lockfile
 
 COPY --from=workspace apps/homelab-k8s-dashboard/src apps/homelab-k8s-dashboard/src
 COPY --from=workspace apps/homelab-k8s-dashboard/tsconfig*.json apps/homelab-k8s-dashboard/
@@ -28,24 +23,7 @@ RUN cd apps/homelab-k8s-dashboard && \
     /app/node_modules/.bin/vue-tsc --build && \
     /app/node_modules/.bin/vite build
 
-# ---- Production dependencies ----
-FROM node:22-slim AS prod-deps
-
-RUN apt-get update \
- && apt-get install -y --no-install-recommends python3 make g++ \
- && rm -rf /var/lib/apt/lists/*
-
-RUN corepack enable pnpm
-
-WORKDIR /app
-
-COPY --from=workspace package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
-COPY --from=workspace apps/api-portal/package.json apps/api-portal/
-COPY --from=workspace apps/obsidian-syncer/package.json apps/obsidian-syncer/
-COPY --from=workspace apps/homelab-k8s-dashboard/package.json apps/homelab-k8s-dashboard/
-
-RUN pnpm install --frozen-lockfile
-
+# Produce an isolated prod-only deploy bundle
 RUN pnpm deploy --filter=@apps/homelab-k8s-dashboard --prod /deploy
 
 # ---- Production Stage ----
@@ -56,7 +34,7 @@ LABEL org.opencontainers.image.description="K8s dashboard showing deployed conta
 
 WORKDIR /app
 
-COPY --from=prod-deps /deploy/node_modules ./node_modules
+COPY --from=builder /deploy/node_modules ./node_modules
 COPY --from=builder /app/apps/homelab-k8s-dashboard/dist ./dist
 
 ENV NODE_ENV=production
