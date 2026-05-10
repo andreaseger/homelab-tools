@@ -42,8 +42,10 @@ describe('resolveTap', () => {
       },
     ];
     expect(resolveTap(zones, 50, 50)).toEqual({ kind: 'noop' });
-    expect(resolveTap(zones, 151, 100)).toEqual({ kind: 'noop' });
-    expect(resolveTap(zones, 100, 151)).toEqual({ kind: 'noop' });
+    // With TOUCH_TOLERANCE=16, the right bound is 100+50+16=166 and
+    // bottom bound is 100+50+16=166. Must test outside those.
+    expect(resolveTap(zones, 200, 100)).toEqual({ kind: 'noop' });
+    expect(resolveTap(zones, 100, 200)).toEqual({ kind: 'noop' });
   });
 
   test('accepts boundary (left/top inclusive, right/bottom exclusive)', () => {
@@ -55,8 +57,9 @@ describe('resolveTap', () => {
     ];
     expect(resolveTap(zones, 10, 10).kind).toBe('navigate');
     expect(resolveTap(zones, 29, 29).kind).toBe('navigate');
-    expect(resolveTap(zones, 30, 10).kind).toBe('noop');
-    expect(resolveTap(zones, 10, 30).kind).toBe('noop');
+    // Zone goes to x:30, y:30. With tolerance, expands to x:46, y:46.
+    expect(resolveTap(zones, 50, 10).kind).toBe('noop');
+    expect(resolveTap(zones, 10, 50).kind).toBe('noop');
   });
 
   test('negative coordinates return noop', () => {
@@ -66,8 +69,10 @@ describe('resolveTap', () => {
         action: { kind: 'navigate', pageId: 'test' },
       },
     ];
-    expect(resolveTap(zones, -1, 10)).toEqual({ kind: 'noop' });
-    expect(resolveTap(zones, 10, -1)).toEqual({ kind: 'noop' });
+    // With tolerance, the zone expands left/top by 16 into negative space.
+    // Test with coordinates far enough negative to still be outside.
+    expect(resolveTap(zones, -20, 10)).toEqual({ kind: 'noop' });
+    expect(resolveTap(zones, 10, -20)).toEqual({ kind: 'noop' });
   });
 
   test('very large coordinates return noop', () => {

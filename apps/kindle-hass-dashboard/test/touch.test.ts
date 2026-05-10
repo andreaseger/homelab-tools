@@ -1,5 +1,5 @@
 import { test, expect, describe, beforeEach } from 'bun:test';
-import { handleTouch } from '../server/routes/touch';
+import { handleTouch, resetTouchDebounce } from '../server/routes/touch';
 import { state } from '../server/state';
 
 function resetState() {
@@ -8,6 +8,7 @@ function resetState() {
   state.touchmap = [];
   state.paused = false;
   state.lastRenderAt = 0;
+  resetTouchDebounce();
 }
 
 describe('handleTouch', () => {

@@ -133,17 +133,41 @@ export function PageView(props: PageViewProps): React.ReactElement {
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
+          justifyContent: 'center',
           padding: '12px 28px',
           borderBottom: '3px solid #2a2a2a',
           height: HEADER_HEIGHT,
           boxSizing: 'border-box',
+          position: 'relative',
         }}
       >
-        {/* Stop button. The kindle's touch-listener.sh detects taps inside
-            x<96 && y<96 locally and runs stop.sh — this button is the visual
-            cue, not a server hot zone. Browsers ignore it. */}
         <div
           style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <span style={{ fontSize: 56, fontWeight: 700, color: '#101010', lineHeight: 1 }}>
+            {props.now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+          </span>
+          <span style={{ fontSize: 20, color: '#505050', marginTop: 4 }}>
+            {props.now.toLocaleDateString('en-GB', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+            })}
+          </span>
+        </div>
+        {/* Stop button. The Kindle's touch-listener.sh detects taps inside
+            x >= STOP_X && y < HEADER_HEIGHT locally and runs stop.sh. This
+            button is the visual cue, not a server hot zone. */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 12,
+            right: 28,
             width: 72,
             height: 72,
             border: '3px solid #2a2a2a',
@@ -158,29 +182,6 @@ export function PageView(props: PageViewProps): React.ReactElement {
           }}
         >
           X
-        </div>
-        <span style={{ fontSize: 44, fontWeight: 700, color: '#101010', marginLeft: 24 }}>
-          {props.page.title}
-        </span>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-end',
-            justifyContent: 'center',
-            marginLeft: 'auto',
-          }}
-        >
-          <span style={{ fontSize: 56, fontWeight: 700, color: '#101010', lineHeight: 1 }}>
-            {props.now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-          </span>
-          <span style={{ fontSize: 20, color: '#505050', marginTop: 4 }}>
-            {props.now.toLocaleDateString('en-GB', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-            })}
-          </span>
         </div>
       </div>
       {elements}
