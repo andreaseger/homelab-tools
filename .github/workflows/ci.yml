@@ -48,6 +48,7 @@ jobs:
           ref: ${{ steps.ctx.outputs.head_sha }}
           filter: tree:0
           fetch-depth: 0
+          lfs: true
 
       - uses: pnpm/action-setup@8912a9102ac27614460f54aedde9e1e7f9aec20d # v6.0.5
 
