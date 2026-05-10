@@ -36,6 +36,8 @@ spec:
               value: 'false'
             - name: MATTERBRIDGE_DIR
               value: /root/.matterbridge
+            - name: PAGES_CONFIG
+              value: /etc/dashboard/pages.yaml
             - name: HASS_URL
               valueFrom:
                 secretKeyRef:
@@ -54,6 +56,9 @@ spec:
           volumeMounts:
             - name: matter
               mountPath: /root/.matterbridge
+            - name: pages-config
+              mountPath: /etc/dashboard
+              readOnly: true
           livenessProbe:
             httpGet:
               path: /health
@@ -83,6 +88,9 @@ spec:
         - name: matter
           persistentVolumeClaim:
             claimName: kindle-hass-dashboard-matter
+        - name: pages-config
+          configMap:
+            name: kindle-hass-dashboard-pages
 ---
 apiVersion: v1
 kind: Service

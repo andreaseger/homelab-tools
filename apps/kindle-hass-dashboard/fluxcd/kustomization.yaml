@@ -4,6 +4,10 @@ resources:
   - deployment.yaml
   - ingress.yaml
   - pvc-matter.yaml
+configMapGenerator:
+  - name: kindle-hass-dashboard-pages
+    files:
+      - pages.yaml
 labels:
   - includeSelectors: true
     pairs:

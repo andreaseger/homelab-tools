@@ -34,6 +34,19 @@ kubectl apply -k fluxcd/
 | `NODE_ENV`         | `production` or `development`                                                          |
 | `EXPOSE_ENABLED`   | `true` to expose the dashboard to HASS as a Matter device (off by default)             |
 | `MATTERBRIDGE_DIR` | Where matterbridge stores commissioning state (defaults to `/root/.matterbridge`)      |
+| `PAGES_CONFIG`     | Path to the dashboard layout YAML (defaults to the file baked into the image)          |
+
+## Dashboard layout
+
+The cluster's dashboard layout lives in [`fluxcd/pages.yaml`](pages.yaml) and is
+mounted into the pod via a `configMapGenerator` in `kustomization.yaml`. Edit
+that file, commit, and flux reconciles — kustomize hashes the configmap name so
+the deployment rolls automatically when the layout changes.
+
+The image also ships with a default copy at
+[`config/pages.yaml`](../config/pages.yaml) (used for local dev and as the
+in-image fallback). The two are independent — keep them in sync by hand if you
+want dev to mirror prod, or let them diverge.
 
 ## Matter exposure (optional)
 

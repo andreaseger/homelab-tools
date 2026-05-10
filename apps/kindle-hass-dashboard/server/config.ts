@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { PageConfig } from '../shared/types';
 
 const bboxSchema = z.object({
   x: z.number(),
@@ -19,6 +20,6 @@ export const pageConfigSchema = z.object({
   layout: z.array(placedWidgetSchema).min(1),
 });
 
-export function validatePages(data: unknown) {
-  return z.array(pageConfigSchema).parse(data);
+export function validatePages(data: unknown): PageConfig[] {
+  return z.array(pageConfigSchema).parse(data) as PageConfig[];
 }

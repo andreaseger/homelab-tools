@@ -1,143 +1,18 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import type { PageConfig } from '../shared/types';
+import { validatePages } from '../server/config';
 
-// ── Dashboard layout ──────────────────────────────────────────────────────
-//
-// This is the single source of truth for what's on the dashboard.
-// Each page has a `layout: PlacedWidget[]` — every entry is one widget at
-// fixed pixel coordinates (the kindle is 1072×1448 — see config/dashboard.ts).
-//
-// The header bar at the top (HEADER_HEIGHT in render/page-view.tsx) shows
-// the page title, time, and date. y=0 in the layout is right below it.
-//
-// Available widgets:
-//
-//   sensor-value   { entity, label?, decimals? }
-//   binary-sensor  { entity, label?, iconOn?, iconOff? }
-//   light-toggle   { entity, label? }            // <domain>.toggle from prefix
-//   line-graph     { entity? | series?: [{ entity, label? }], hours,
-//                    label?, yMin?, yMax?, bucketMinutes? }
-//                  Multi-series: first solid, second dashed.
-//   room-climate   { label, metrics: [{ entity, caption, decimals? }],
-//                    graph?: { entity, hours?, bucketMinutes?, label? } }
-//                  First metric is rendered larger; optional inline sparkline
-//                  whose y-axis auto-scales to the observed min/max.
-//   clock          { format?, showDate? }        // standalone clock widget
-//   page-tabs      { pages: [{ id, label }] }
-//
-// Coordinates: bbox is `{ x, y, w, h }` in pixels. Widgets fill their bbox.
+// Layout lives in pages.yaml (next to this file) so it can be edited or
+// overridden via a mounted ConfigMap without rebuilding. Set PAGES_CONFIG
+// to point at an alternate path.
+const configPath = process.env.PAGES_CONFIG ?? resolve(import.meta.dir, 'pages.yaml');
 
-const TABS = {
-  pages: [
-    { id: 'overview', label: 'Overview' },
-    { id: 'controls', label: 'Controls' },
-  ],
-};
+const text = readFileSync(configPath, 'utf8');
+const parsed = Bun.YAML.parse(text);
 
-export const pages: PageConfig[] = [
-  {
-    id: 'overview',
-    title: 'Overview',
-    layout: [
-      { widget: 'page-tabs', bbox: { x: 24, y: 16, w: 1024, h: 64 }, config: TABS },
+if (!parsed || typeof parsed !== 'object' || !Array.isArray((parsed as { pages?: unknown }).pages)) {
+  throw new Error(`Invalid pages config at ${configPath}: expected { pages: [...] }`);
+}
 
-      // Indoor — temp / humidity / CO2 + 6h CO2 sparkline
-      {
-        widget: 'room-climate',
-        bbox: { x: 24, y: 96, w: 1024, h: 220 },
-        config: {
-          label: 'Office',
-          metrics: [
-            {
-              entity: 'sensor.aq_monitor_w_display_kalman_temperature',
-              caption: 'Temperature',
-              decimals: 1,
-            },
-            { entity: 'sensor.aq_monitor_w_display_scd41_humidity', caption: 'Humidity' },
-            { entity: 'sensor.aq_monitor_w_display_scd41_co2_level', caption: 'CO2' },
-          ],
-          graph: {
-            entity: 'sensor.aq_monitor_w_display_scd41_co2_level',
-            hours: 6,
-            bucketMinutes: 15,
-            label: 'CO2 · 6H',
-          },
-        },
-      },
-      {
-        widget: 'room-climate',
-        bbox: { x: 24, y: 336, w: 1024, h: 220 },
-        config: {
-          label: 'Bedroom',
-          metrics: [
-            {
-              entity: 'sensor.esp32_c3_aq_monitor_v2_kalman_temperature',
-              caption: 'Temperature',
-              decimals: 1,
-            },
-            { entity: 'sensor.esp32_c3_aq_monitor_v2_kalman_humidity', caption: 'Humidity' },
-            { entity: 'sensor.esp32_c3_aq_monitor_v2_scd41_co2_level', caption: 'CO2' },
-          ],
-          graph: {
-            entity: 'sensor.esp32_c3_aq_monitor_v2_scd41_co2_level',
-            hours: 6,
-            bucketMinutes: 15,
-            label: 'CO2 · 6H',
-          },
-        },
-      },
-
-      // Outdoor — temp / humidity / illuminance, no inline graph
-      {
-        widget: 'room-climate',
-        bbox: { x: 24, y: 576, w: 1024, h: 220 },
-        config: {
-          label: 'Outdoor',
-          metrics: [
-            { entity: 'sensor.temp_humidity_sensor_temperature', caption: 'Temperature', decimals: 1 },
-            { entity: 'sensor.temp_humidity_sensor_humidity', caption: 'Humidity' },
-            { entity: 'sensor.tze200_3towulqd_ts0601_illuminance_5', caption: 'Light' },
-          ],
-          graph: {
-            entity: 'sensor.temp_humidity_sensor_temperature',
-            hours: 12,
-            bucketMinutes: 15,
-            label: 'Temperature · 12H',
-          },
-        },
-      },
-
-      // Outdoor + bedroom temperature comparison (24h)
-      {
-        widget: 'line-graph',
-        bbox: { x: 24, y: 816, w: 1024, h: 524 },
-        config: {
-          series: [
-            { entity: 'sensor.temp_humidity_sensor_temperature', label: 'Outdoor' },
-            { entity: 'sensor.aq_monitor_w_display_kalman_temperature', label: 'Office' },
-          ],
-          label: 'Temperature · 24h',
-          hours: 24,
-          bucketMinutes: 30,
-        },
-      },
-    ],
-  },
-  {
-    id: 'controls',
-    title: 'Controls',
-    layout: [
-      { widget: 'page-tabs', bbox: { x: 24, y: 16, w: 1024, h: 64 }, config: TABS },
-
-      {
-        widget: 'light-toggle',
-        bbox: { x: 24, y: 104, w: 504, h: 180 },
-        config: { entity: 'light.office_hue_lamp_light', label: 'Office Light' },
-      },
-      {
-        widget: 'light-toggle',
-        bbox: { x: 544, y: 104, w: 504, h: 180 },
-        config: { entity: 'switch.plug_et20_6_coffeemachine', label: 'Coffee Machine' },
-      },
-    ],
-  },
-];
+export const pages: PageConfig[] = validatePages((parsed as { pages: unknown }).pages);
