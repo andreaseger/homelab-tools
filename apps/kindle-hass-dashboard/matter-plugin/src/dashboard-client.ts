@@ -1,18 +1,9 @@
-interface DeviceState {
-  id: string;
+interface DashboardStateResponse {
   current_page: string;
   paused: boolean;
   last_render_at: number;
-}
-
-interface DashboardStateResponse {
-  devices: DeviceState[];
-}
-
-interface CommandRequest {
-  device: string;
-  kind: string;
-  value: number;
+  width: number;
+  height: number;
 }
 
 export class DashboardClient {
@@ -36,9 +27,12 @@ export class DashboardClient {
     }
   }
 
-  async postCommand(device: string, kind: string, value: number): Promise<boolean> {
+  async postCommand(kind: string, value: number): Promise<boolean> {
+    return this.postCommandWithBody({ kind, value });
+  }
+
+  async postCommandWithBody(body: Record<string, unknown>): Promise<boolean> {
     try {
-      const body: CommandRequest = { device, kind, value };
       const res = await fetch(`${this.baseUrl}/command`, {
         method: 'POST',
         headers: {
@@ -46,22 +40,6 @@ export class DashboardClient {
           Authorization: `Bearer ${this.token}`,
         },
         body: JSON.stringify(body),
-      });
-      return res.ok;
-    } catch {
-      return false;
-    }
-  }
-
-  async postCommandWithBody(device: string, body: Record<string, unknown>): Promise<boolean> {
-    try {
-      const res = await fetch(`${this.baseUrl}/command`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.token}`,
-        },
-        body: JSON.stringify({ device, ...body }),
       });
       return res.ok;
     } catch {

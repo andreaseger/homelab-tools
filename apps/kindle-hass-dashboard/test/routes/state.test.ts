@@ -1,44 +1,33 @@
 import { test, expect, describe } from 'bun:test';
 import { serveState } from '../../server/routes/state';
-import { devices } from '../../server/devices';
+import { setPage, setPaused } from '../../server/state';
 
 describe('serveState', () => {
-  test('returns JSON with devices array', async () => {
+  test('returns JSON with single dashboard state', async () => {
     const res = serveState();
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toContain('application/json');
-    const data = (await res.json()) as { devices: Array<Record<string, unknown>> };
-    expect(data.devices.length).toBeGreaterThanOrEqual(1);
+    const data = (await res.json()) as Record<string, unknown>;
+    expect(data).toHaveProperty('current_page');
+    expect(data).toHaveProperty('paused');
+    expect(data).toHaveProperty('last_render_at');
+    expect(data).toHaveProperty('width');
+    expect(data).toHaveProperty('height');
   });
 
-  test('each device has required fields', async () => {
+  test('reflects setPage', async () => {
+    setPage('lights');
     const res = serveState();
-    const data = (await res.json()) as { devices: Array<Record<string, unknown>> };
-    for (const d of data.devices) {
-      expect(d).toHaveProperty('id');
-      expect(d).toHaveProperty('current_page');
-      expect(d).toHaveProperty('paused');
-      expect(d).toHaveProperty('last_render_at');
-      expect(d).toHaveProperty('width');
-      expect(d).toHaveProperty('height');
-    }
+    const data = (await res.json()) as { current_page: string };
+    expect(data.current_page).toBe('lights');
+    setPage('overview');
   });
 
-  test('reflects setPage change on kindle1', async () => {
-    devices.setPage('kindle1', 'lights');
+  test('reflects setPaused', async () => {
+    setPaused(true);
     const res = serveState();
-    const data = (await res.json()) as { devices: Array<{ id: string; current_page: string }> };
-    const kindle1 = data.devices.find((d) => d.id === 'kindle1');
-    expect(kindle1?.current_page).toBe('lights');
-    devices.setPage('kindle1', 'overview');
-  });
-
-  test('reflects setPaused change on kindle1', async () => {
-    devices.setPaused('kindle1', true);
-    const res = serveState();
-    const data = (await res.json()) as { devices: Array<{ id: string; paused: boolean }> };
-    const kindle1 = data.devices.find((d) => d.id === 'kindle1');
-    expect(kindle1?.paused).toBe(true);
-    devices.setPaused('kindle1', false);
+    const data = (await res.json()) as { paused: boolean };
+    expect(data.paused).toBe(true);
+    setPaused(false);
   });
 });

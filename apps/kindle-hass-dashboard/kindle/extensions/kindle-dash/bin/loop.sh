@@ -13,11 +13,11 @@ while true; do
         HTTP_CODE=$(curl -s -D "$HEADERS" -w "%{http_code}" \
             -H "If-None-Match: $ETAG" \
             -H "Authorization: Bearer $TOKEN" \
-            "$SERVER_URL/render?device=$DEVICE_ID" -o "$OUT_PNG" 2>/dev/null)
+            "$SERVER_URL/render" -o "$OUT_PNG" 2>/dev/null)
     else
         HTTP_CODE=$(curl -s -D "$HEADERS" -w "%{http_code}" \
             -H "Authorization: Bearer $TOKEN" \
-            "$SERVER_URL/render?device=$DEVICE_ID" -o "$OUT_PNG" 2>/dev/null)
+            "$SERVER_URL/render" -o "$OUT_PNG" 2>/dev/null)
     fi
 
     if [ "$HTTP_CODE" = "200" ]; then

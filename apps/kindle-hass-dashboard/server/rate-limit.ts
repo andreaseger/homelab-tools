@@ -2,13 +2,13 @@ const MAX_PER_SECOND = 10;
 
 const buckets = new Map<string, { count: number; resetAt: number }>();
 
-export function rateLimit(device: string): boolean {
+export function rateLimit(key: string): boolean {
   const now = Date.now();
-  let bucket = buckets.get(device);
+  let bucket = buckets.get(key);
 
   if (!bucket || now > bucket.resetAt) {
     bucket = { count: 1, resetAt: now + 1000 };
-    buckets.set(device, bucket);
+    buckets.set(key, bucket);
     return true;
   }
 

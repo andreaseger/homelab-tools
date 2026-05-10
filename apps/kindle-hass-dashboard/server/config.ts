@@ -19,18 +19,6 @@ export const pageConfigSchema = z.object({
   layout: z.array(placedWidgetSchema).min(1),
 });
 
-export const deviceProfileSchema = z.object({
-  id: z.string().min(1),
-  width: z.number().positive(),
-  height: z.number().positive(),
-  rotation: z.enum(['0', '90', '180', '270']).transform(Number).optional(),
-  startPageId: z.string().min(1),
-});
-
 export function validatePages(data: unknown) {
   return z.array(pageConfigSchema).parse(data);
-}
-
-export function validateDevices(data: unknown) {
-  return z.array(deviceProfileSchema).parse(data);
 }

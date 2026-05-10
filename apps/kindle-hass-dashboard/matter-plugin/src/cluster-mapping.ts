@@ -31,10 +31,9 @@ export function startStatePoll(
   updateCallback: (state: ReturnType<typeof mapStateToAttributes>) => void
 ) {
   async function poll() {
-    const state = await getClient().getState();
-    if (state?.devices?.[0]) {
-      const attrs = mapStateToAttributes(state.devices[0]);
-      updateCallback(attrs);
+    const s = await getClient().getState();
+    if (s) {
+      updateCallback(mapStateToAttributes(s));
     }
   }
 
@@ -49,11 +48,11 @@ export function stopStatePoll() {
   }
 }
 
-export async function handleBacklightChange(deviceId: string, level: number) {
+export async function handleBacklightChange(level: number) {
   const cmd = mapBacklightToCommand(level);
-  return getClient().postCommand(deviceId, cmd.kind, cmd.value);
+  return getClient().postCommand(cmd.kind, cmd.value);
 }
 
-export async function handlePageSwitch(deviceId: string, pageId: string) {
-  return getClient().postCommandWithBody(deviceId, { kind: 'set_page', pageId });
+export async function handlePageSwitch(pageId: string) {
+  return getClient().postCommandWithBody({ kind: 'set_page', pageId });
 }

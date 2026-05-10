@@ -1,19 +1,16 @@
 import { test, expect, describe } from 'bun:test';
 import { renderToSvg, loadFont } from '../server/render/ssr';
-import type { PageConfig, DeviceProfile, HistoryEntry } from '../shared/types';
+import type { PageConfig, HistoryEntry } from '../shared/types';
 
-const DEVICE: DeviceProfile = { id: 'test', width: 1072, height: 1448, startPageId: 'overview' };
+const W = 1072;
+const H = 1448;
 const NOOP_FETCH = async (): Promise<HistoryEntry[]> => [];
 
 describe('renderToSvg', () => {
   test('returns SVG string and hotZones array', async () => {
     const fontData = await loadFont();
-    const page: PageConfig = {
-      id: 'test',
-      title: 'Test',
-      layout: [],
-    };
-    const { svg, hotZones } = await renderToSvg(page, DEVICE, {}, fontData, NOOP_FETCH);
+    const page: PageConfig = { id: 'test', title: 'Test', layout: [] };
+    const { svg, hotZones } = await renderToSvg(page, W, H, {}, fontData, NOOP_FETCH);
     expect(typeof svg).toBe('string');
     expect(svg).toContain('<svg');
     expect(Array.isArray(hotZones)).toBe(true);
@@ -39,7 +36,8 @@ describe('renderToSvg', () => {
     };
     const { hotZones } = await renderToSvg(
       page,
-      DEVICE,
+      W,
+      H,
       {},
       fontData,
       async () => [],
@@ -62,7 +60,7 @@ describe('renderToSvg', () => {
         },
       ],
     };
-    const { svg, hotZones } = await renderToSvg(page, DEVICE, {}, fontData, NOOP_FETCH);
+    const { svg, hotZones } = await renderToSvg(page, W, H, {}, fontData, NOOP_FETCH);
     expect(typeof svg).toBe('string');
     expect(hotZones).toEqual([]);
   });
@@ -80,7 +78,7 @@ describe('renderToSvg', () => {
         },
       ],
     };
-    const { svg } = await renderToSvg(page, DEVICE, {}, fontData, NOOP_FETCH);
+    const { svg } = await renderToSvg(page, W, H, {}, fontData, NOOP_FETCH);
     expect(svg).toContain('<svg');
   });
 });

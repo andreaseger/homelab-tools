@@ -2,42 +2,34 @@ import type { HassEntities } from 'home-assistant-js-websocket';
 
 const DEBOUNCE_MS = parseInt(process.env.RENDER_DEBOUNCE_MS ?? '500', 10);
 
-type RenderCallback = (device: string) => void;
+type TickCallback = () => void;
 
 class PageBus {
-  private subscribers = new Map<string, Set<RenderCallback>>();
-  private pendingDevices = new Set<string>();
+  private subscribers = new Set<TickCallback>();
+  private pending = false;
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-  subscribe(device: string, callback: RenderCallback): () => void {
-    if (!this.subscribers.has(device)) {
-      this.subscribers.set(device, new Set());
-    }
-    this.subscribers.get(device)!.add(callback);
-
+  subscribe(callback: TickCallback): () => void {
+    this.subscribers.add(callback);
     return () => {
-      this.subscribers.get(device)?.delete(callback);
+      this.subscribers.delete(callback);
     };
   }
 
-  notifyForEntities(device: string, changedEntities: Set<string>): void {
-    if (this.subscribers.has(device) && changedEntities.size > 0) {
-      this.pendingDevices.add(device);
+  notifyForEntities(changedEntities: Set<string>): void {
+    if (changedEntities.size > 0) {
+      this.pending = true;
       this.flushDebounced();
     }
   }
 
-  onEntitiesChange(_entities: HassEntities, entitySetsByDevice: Map<string, Set<string>>): void {
-    for (const [device, entitySet] of entitySetsByDevice) {
-      this.notifyForEntities(device, entitySet);
-    }
+  onEntitiesChange(_entities: HassEntities, watched: Set<string>): void {
+    this.notifyForEntities(watched);
   }
 
   tick(): void {
-    for (const [device, cbs] of this.subscribers) {
-      for (const cb of cbs) {
-        cb(device);
-      }
+    for (const cb of this.subscribers) {
+      cb();
     }
   }
 
@@ -47,15 +39,10 @@ class PageBus {
   }
 
   private flush(): void {
-    for (const device of this.pendingDevices) {
-      const cbs = this.subscribers.get(device);
-      if (cbs) {
-        for (const cb of cbs) {
-          cb(device);
-        }
-      }
+    if (this.pending) {
+      this.tick();
+      this.pending = false;
     }
-    this.pendingDevices.clear();
     this.debounceTimer = null;
   }
 }

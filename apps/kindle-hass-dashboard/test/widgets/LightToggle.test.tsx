@@ -7,6 +7,7 @@ function makeCtx(entityValues: Record<string, unknown> = {}): WidgetCtx {
   return {
     device: { id: 'kindle1', width: 1072, height: 1448, startPageId: 'overview' } as DeviceProfile,
     page: { id: 'overview', title: 'Overview', layout: [] } as PageConfig,
+    bbox: { x: 0, y: 0, w: 300, h: 80 },
     entityValues,
     now: new Date('2025-01-15T10:30:00Z'),
     registerHotZone: (bbox, action, debug) => hotZones.push({ bbox, action, debug }),
@@ -41,6 +42,7 @@ describe('LightToggleWidget', () => {
         startPageId: 'overview',
       } as DeviceProfile,
       page: { id: 'overview', title: 'Overview', layout: [] } as PageConfig,
+      bbox: { x: 0, y: 0, w: 300, h: 80 },
       entityValues: { 'light.living': { state: 'on', attributes: {} } },
       now: new Date('2025-01-15T10:30:00Z'),
       registerHotZone: (bbox, action, debug) => hotZones.push({ bbox, action, debug }),

@@ -8,7 +8,7 @@ SEQ=0
 
 while true; do
     RESP=$(curl -s -H "Authorization: Bearer $TOKEN" \
-        "$SERVER_URL/command?device=$DEVICE_ID&since=$SEQ" 2>/dev/null)
+        "$SERVER_URL/command?since=$SEQ" 2>/dev/null)
 
     if [ -n "$RESP" ]; then
         CMDS=$(echo "$RESP" | grep -o '"kind":"[^"]*"' | cut -d'"' -f4)

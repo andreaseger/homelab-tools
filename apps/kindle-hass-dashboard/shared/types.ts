@@ -43,6 +43,7 @@ export interface WidgetSpec<C = unknown> {
 export interface WidgetCtx {
   device: DeviceProfile;
   page: PageConfig;
+  bbox: BBox;
   entityValues: Record<string, unknown>;
   now: Date;
   registerHotZone: (bbox: BBox, action: Action, debug?: string) => void;

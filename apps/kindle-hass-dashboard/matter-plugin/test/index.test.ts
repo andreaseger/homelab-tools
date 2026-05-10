@@ -23,9 +23,11 @@ describe('DashboardClient', () => {
               return new Response('Unauthorized', { status: 401 });
             }
             return Response.json({
-              devices: [
-                { id: 'kindle1', current_page: 'overview', paused: false, last_render_at: 12345 },
-              ],
+              current_page: 'overview',
+              paused: false,
+              last_render_at: 12345,
+              width: 1072,
+              height: 1448,
             });
           },
         },
@@ -55,13 +57,12 @@ describe('DashboardClient', () => {
     receivedCommands = [];
   });
 
-  test('getState returns device state', async () => {
+  test('getState returns dashboard state', async () => {
     const client = new DashboardClient(`http://127.0.0.1:${server.port}`, 'test-token');
     const state = await client.getState();
     expect(state).not.toBeNull();
-    expect(state!.devices).toHaveLength(1);
-    expect(state!.devices[0]!.current_page).toBe('overview');
-    expect(state!.devices[0]!.paused).toBe(false);
+    expect(state!.current_page).toBe('overview');
+    expect(state!.paused).toBe(false);
   });
 
   test('getState returns null on unauthorized', async () => {
@@ -72,7 +73,7 @@ describe('DashboardClient', () => {
 
   test('postCommand sends command with bearer auth', async () => {
     const client = new DashboardClient(`http://127.0.0.1:${server.port}`, 'test-token');
-    const ok = await client.postCommand('kindle1', 'set_backlight', 18);
+    const ok = await client.postCommand('set_backlight', 18);
     expect(ok).toBe(true);
     expect(receivedCommands).toHaveLength(1);
     expect(receivedCommands[0]!.kind).toBe('set_backlight');
@@ -81,7 +82,7 @@ describe('DashboardClient', () => {
 
   test('postCommandWithBody sends arbitrary body', async () => {
     const client = new DashboardClient(`http://127.0.0.1:${server.port}`, 'test-token');
-    const ok = await client.postCommandWithBody('kindle1', { kind: 'set_page', pageId: 'lights' });
+    const ok = await client.postCommandWithBody({ kind: 'set_page', pageId: 'lights' });
     expect(ok).toBe(true);
     expect(receivedCommands).toHaveLength(1);
     expect(receivedCommands[0]!.kind).toBe('set_page');
@@ -124,7 +125,7 @@ describe('cluster-mapping', () => {
   });
 
   test('handleBacklightChange maps 0-100 to 0-24 intensity', async () => {
-    const ok = await handleBacklightChange('kindle1', 50);
+    const ok = await handleBacklightChange(50);
     expect(ok).toBe(true);
     expect(receivedCommands).toHaveLength(1);
     expect(receivedCommands[0]!.kind).toBe('set_backlight');
@@ -132,7 +133,7 @@ describe('cluster-mapping', () => {
   });
 
   test('handlePageSwitch sends set_page command', async () => {
-    const ok = await handlePageSwitch('kindle1', 'lights');
+    const ok = await handlePageSwitch('lights');
     expect(ok).toBe(true);
     expect(receivedCommands).toHaveLength(1);
     expect(receivedCommands[0]!.kind).toBe('set_page');

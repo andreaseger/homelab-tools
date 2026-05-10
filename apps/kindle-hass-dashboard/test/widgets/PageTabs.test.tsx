@@ -4,17 +4,18 @@ import type { WidgetCtx, DeviceProfile, PageConfig, ActionHotZone } from '../../
 
 function makeCtx(
   currentPageId: string,
-  deviceWidth: number = 1072
+  bboxWidth: number = 1072
 ): { ctx: WidgetCtx; hotZones: ActionHotZone[] } {
   const hotZones: ActionHotZone[] = [];
   const ctx: WidgetCtx = {
     device: {
       id: 'kindle1',
-      width: deviceWidth,
+      width: 1072,
       height: 1448,
       startPageId: 'overview',
     } as DeviceProfile,
     page: { id: currentPageId, title: 'Overview', layout: [] } as PageConfig,
+    bbox: { x: 0, y: 0, w: bboxWidth, h: 56 },
     entityValues: {},
     now: new Date('2025-01-15T10:30:00Z'),
     registerHotZone: (bbox, action, debug) => hotZones.push({ bbox, action, debug }),

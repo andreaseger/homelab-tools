@@ -8,6 +8,7 @@ function makeCtx(now: Date = FIXED_DATE): WidgetCtx {
   return {
     device: { id: 'kindle1', width: 1072, height: 1448, startPageId: 'overview' } as DeviceProfile,
     page: { id: 'overview', title: 'Overview', layout: [] } as PageConfig,
+    bbox: { x: 0, y: 0, w: 400, h: 100 },
     entityValues: {},
     now,
     registerHotZone: () => {},

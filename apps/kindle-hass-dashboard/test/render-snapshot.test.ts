@@ -1,12 +1,25 @@
 import { test, expect, describe } from 'bun:test';
-import { render } from '../server/renderer';
+import { renderPng } from '../server/renderer';
+import { state, setPage } from '../server/state';
 import { mkdirSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const MOCK_ENTITIES: Record<string, unknown> = {
-  'sensor.temperature': {
+  'sensor.living_room_temperature': {
     state: '22.5',
-    attributes: { friendly_name: 'Temperature', unit_of_measurement: '°C' },
+    attributes: { friendly_name: 'Living Room', unit_of_measurement: '°C' },
+  },
+  'sensor.bedroom_temperature': {
+    state: '20.1',
+    attributes: { friendly_name: 'Bedroom', unit_of_measurement: '°C' },
+  },
+  'sensor.outdoor_temperature': {
+    state: '12.3',
+    attributes: { friendly_name: 'Outdoor', unit_of_measurement: '°C' },
+  },
+  'sensor.living_room_humidity': {
+    state: '45',
+    attributes: { friendly_name: 'Humidity', unit_of_measurement: '%' },
   },
 };
 
@@ -46,43 +59,51 @@ function assertImageSnapshot(png: Uint8Array, name: string) {
   }
 }
 
-describe('render', () => {
-  test('returns render result for kindle1', async () => {
-    const result = await render('kindle1', MOCK_ENTITIES, FIXED_NOW);
+describe('renderPng', () => {
+  test('returns render result for the dashboard', async () => {
+    setPage('overview');
+    const result = await renderPng(MOCK_ENTITIES, FIXED_NOW);
     expect(result.png).toBeInstanceOf(Uint8Array);
     expect(result.png.length).toBeGreaterThan(0);
     expect(result.etag).toMatch(/^"[0-9a-f]+"$/);
     expect(result.pageId).toBe('overview');
-    expect(result.width).toBe(1072);
-    expect(result.height).toBe(1448);
+    expect(result.width).toBe(state.width);
+    expect(result.height).toBe(state.height);
     expect(result.touchmap).toBeInstanceOf(Array);
   });
 
   test('same input produces same etag', async () => {
-    const r1 = await render('kindle1', MOCK_ENTITIES, FIXED_NOW);
-    const r2 = await render('kindle1', MOCK_ENTITIES, FIXED_NOW);
+    setPage('overview');
+    const r1 = await renderPng(MOCK_ENTITIES, FIXED_NOW);
+    const r2 = await renderPng(MOCK_ENTITIES, FIXED_NOW);
     expect(r1.etag).toBe(r2.etag);
   });
 
-  test('touchmap has entries for page-tabs', async () => {
-    const result = await render('kindle1', MOCK_ENTITIES, FIXED_NOW);
+  test('touchmap has navigate entries on overview (page tabs)', async () => {
+    setPage('overview');
+    const result = await renderPng(MOCK_ENTITIES, FIXED_NOW);
     const navZones = result.touchmap.filter((z) => z.action.kind === 'navigate');
     expect(navZones.length).toBeGreaterThan(0);
   });
 
   test('snapshot matches baseline - overview', async () => {
-    const result = await render('kindle1', MOCK_ENTITIES, FIXED_NOW);
+    setPage('overview');
+    const result = await renderPng(MOCK_ENTITIES, FIXED_NOW);
     assertImageSnapshot(result.png, 'overview');
   });
 
   test('snapshot matches baseline - lights', async () => {
+    setPage('lights');
     const entities: Record<string, unknown> = {
-      'light.living_room': {
-        state: 'on',
-        attributes: { friendly_name: 'Living Room Light' },
-      },
+      'light.living_room': { state: 'on', attributes: { friendly_name: 'Living Room' } },
+      'light.kitchen': { state: 'off', attributes: { friendly_name: 'Kitchen' } },
+      'light.bedroom': { state: 'on', attributes: { friendly_name: 'Bedroom' } },
+      'light.office': { state: 'off', attributes: { friendly_name: 'Office' } },
+      'light.hallway': { state: 'off', attributes: { friendly_name: 'Hallway' } },
+      'light.bathroom': { state: 'off', attributes: { friendly_name: 'Bathroom' } },
     };
-    const result = await render('kindle1', entities, FIXED_NOW);
+    const result = await renderPng(entities, FIXED_NOW);
     assertImageSnapshot(result.png, 'lights');
+    setPage('overview');
   });
 });

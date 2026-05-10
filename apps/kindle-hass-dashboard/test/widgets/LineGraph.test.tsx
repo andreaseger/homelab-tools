@@ -6,6 +6,7 @@ function makeCtx(history: HistoryEntry[] = []): WidgetCtx {
   return {
     device: { id: 'kindle1', width: 1072, height: 1448, startPageId: 'overview' } as DeviceProfile,
     page: { id: 'overview', title: 'Overview', layout: [] } as PageConfig,
+    bbox: { x: 0, y: 0, w: 600, h: 200 },
     entityValues: {},
     now: new Date('2025-01-15T10:30:00Z'),
     registerHotZone: () => {},

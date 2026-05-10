@@ -1,16 +1,14 @@
 const DASHBOARD_TOKEN = process.env.DASHBOARD_TOKEN;
+const IS_DEV = process.env.NODE_ENV !== 'production';
 
-const PROTECTED_PATHS = ['/render', '/touch', '/preview', '/state', '/command'];
+const PROTECTED_PATHS = ['/render', '/touch', '/state', '/command'];
 
 export function authMiddleware(req: Request): Response | null {
+  if (IS_DEV) return null;
   if (!DASHBOARD_TOKEN) return null;
 
   const url = new URL(req.url);
   if (!PROTECTED_PATHS.some((p) => url.pathname.startsWith(p))) {
-    return null;
-  }
-
-  if (url.pathname.startsWith('/preview') && process.env.NODE_ENV !== 'production') {
     return null;
   }
 

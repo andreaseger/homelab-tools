@@ -1,53 +1,75 @@
 import { serve } from 'bun';
 import { serveHealth } from './routes/health';
-import { createRenderResult } from './routes/render';
+import { servePng } from './routes/render';
 import { handleTouch } from './routes/touch';
-import { servePreview } from './routes/preview';
+import { serveDashboard, serveFragment } from './routes/dashboard';
+import { serveEvents } from './routes/events';
 import { serveState } from './routes/state';
 import { serveCommand } from './routes/command';
 import { pageBus } from './page-bus';
 import { onEntitiesChange } from './hass';
-import { devices } from './devices';
+import { state } from './state';
 import { pages } from '../config/pages';
 import { authMiddleware } from './auth';
 import { rateLimit } from './rate-limit';
+import { getWidget } from '../widgets';
 
 const PORT = parseInt(process.env.PORT ?? '8080', 10);
 const EXPOSE_ENABLED = process.env.EXPOSE_ENABLED === 'true';
 
+// Per-entity fingerprint (last_updated, falling back to state) so we can detect
+// which entities actually changed and only refresh when something the current
+// page subscribes to has moved. Without this, every HASS push triggers a tick.
+const entityFingerprints = new Map<string, string>();
+
 onEntitiesChange((entities) => {
-  const entitySetsByDevice = new Map<string, Set<string>>();
-  for (const profile of devices.list()) {
-    const page = pages.find((p: { id: string }) => p.id === profile.startPageId);
-    if (!page) continue;
-    const entitySet = new Set<string>();
-    for (const placed of page.layout) {
-      const entitiesFn = getWidgetEntities(placed);
-      for (const e of entitiesFn) entitySet.add(e);
+  const page = pages.find((p) => p.id === state.currentPage);
+  if (!page) return;
+
+  const watched = new Set<string>();
+  for (const placed of page.layout) {
+    const spec = getWidget(placed.widget);
+    if (!spec?.entities) continue;
+    for (const e of spec.entities(placed.config as never)) {
+      watched.add(e);
     }
-    entitySetsByDevice.set(profile.id, entitySet);
   }
-  pageBus.onEntitiesChange(entities, entitySetsByDevice);
+
+  const changed = new Set<string>();
+  for (const id of watched) {
+    const entity = entities[id] as
+      | { state?: string; last_updated?: string }
+      | undefined;
+    if (!entity) continue;
+    const fp = entity.last_updated ?? entity.state ?? '';
+    if (entityFingerprints.get(id) !== fp) {
+      entityFingerprints.set(id, fp);
+      changed.add(id);
+    }
+  }
+
+  if (changed.size > 0) {
+    pageBus.notifyForEntities(changed);
+  }
 });
 
 setInterval(() => pageBus.tick(), 60_000);
 
-function getWidgetEntities(placed: { widget: string; config: unknown }): string[] {
-  try {
-    const { getWidget } = require('../widgets');
-    const spec = getWidget(placed.widget);
-    if (spec?.entities) {
-      return spec.entities(placed.config);
-    }
-  } catch {
-    return [];
-  }
-  return [];
-}
-
 const server = serve({
   port: PORT,
   routes: {
+    '/': {
+      GET: () => serveDashboard(),
+    },
+
+    '/fragment': {
+      GET: () => serveFragment(),
+    },
+
+    '/events': {
+      GET: (req) => serveEvents(req),
+    },
+
     '/health': {
       GET: serveHealth,
     },
@@ -57,11 +79,8 @@ const server = serve({
         const auth = authMiddleware(req);
         if (auth) return auth;
 
-        const url = new URL(req.url);
-        const device = url.searchParams.get('device') ?? 'kindle1';
         const ifNoneMatch = req.headers.get('if-none-match');
-
-        const result = await createRenderResult(device);
+        const result = await servePng();
 
         if (ifNoneMatch === result.etag) {
           return new Response(null, { status: 304, headers: { ETag: result.etag } });
@@ -82,25 +101,13 @@ const server = serve({
         const auth = authMiddleware(req);
         if (auth) return auth;
 
-        const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
-        const device = body.device as string;
-
-        if (device && !rateLimit(device)) {
+        if (!rateLimit('touch')) {
           return Response.json({ error: 'rate limited' }, { status: 429 });
         }
 
+        const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
         const result = await handleTouch(body);
         return Response.json(result.body, { status: result.status });
-      },
-    },
-
-    '/preview/:device': {
-      async GET(req) {
-        const auth = authMiddleware(req);
-        if (auth) return auth;
-
-        const device = req.params.device;
-        return servePreview(device);
       },
     },
 
@@ -137,5 +144,5 @@ const server = serve({
 
 console.log(`📱 Kindle HASS Dashboard running at ${server.url}`);
 if (EXPOSE_ENABLED) {
-  console.log('🔌 M7 Matterbridge routes (/state, /command) enabled');
+  console.log('🔌 Matterbridge routes (/state, /command) enabled');
 }

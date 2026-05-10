@@ -14,7 +14,7 @@ export const SensorValueWidget: WidgetSpec<SensorValueConfig> = {
     const entity = ctx.entityValues[config.entity] as
       | { state?: string; attributes?: Record<string, unknown> }
       | undefined;
-    const rawValue = entity?.state ?? 'unknown';
+    const rawValue = entity?.state ?? '—';
     const numValue = parseFloat(rawValue);
     const decimals = config.decimals ?? 0;
     const displayValue = isNaN(numValue) ? rawValue : numValue.toFixed(decimals);
@@ -30,16 +30,31 @@ export const SensorValueWidget: WidgetSpec<SensorValueConfig> = {
         style={{
           display: 'flex',
           flexDirection: 'column',
-          padding: 12,
-          border: '2px solid #a0a0a0',
-          borderRadius: 4,
-          backgroundColor: '#e8e8e8',
+          justifyContent: 'space-between',
+          width: '100%',
+          height: '100%',
+          padding: '20px 24px',
+          border: '2px solid #303030',
+          borderRadius: 12,
+          backgroundColor: '#fafaf6',
+          boxSizing: 'border-box',
         }}
       >
-        <div style={{ fontSize: 16, color: '#606060', marginBottom: 4 }}>{label}</div>
+        <div
+          style={{
+            fontSize: 24,
+            color: '#505050',
+            letterSpacing: 0.5,
+            textTransform: 'uppercase',
+          }}
+        >
+          {label}
+        </div>
         <div style={{ display: 'flex', alignItems: 'baseline' }}>
-          <span style={{ fontSize: 36, fontWeight: 'bold', color: '#101010' }}>{displayValue}</span>
-          {unit && <span style={{ fontSize: 18, color: '#808080', marginLeft: 4 }}>{unit}</span>}
+          <span style={{ fontSize: 96, fontWeight: 700, color: '#101010', lineHeight: 1 }}>
+            {displayValue}
+          </span>
+          {unit && <span style={{ fontSize: 32, color: '#404040', marginLeft: 8 }}>{unit}</span>}
         </div>
       </div>
     );

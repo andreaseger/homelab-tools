@@ -25,24 +25,65 @@ export const LightToggleWidget: WidgetSpec<LightToggleConfig> = {
       service: 'toggle',
       target: { entity_id: config.entity },
     };
-
-    ctx.registerHotZone({ x: 0, y: 0, w: 300, h: 80 }, action, `toggle ${config.entity}`);
+    ctx.registerHotZone(
+      { x: 0, y: 0, w: ctx.bbox.w, h: ctx.bbox.h },
+      action,
+      `toggle ${config.entity}`
+    );
 
     return (
       <div
         style={{
           display: 'flex',
-          flexDirection: 'column',
-          padding: 16,
-          border: '2px solid #a0a0a0',
-          borderRadius: 4,
-          backgroundColor: isOn ? '#ffffff' : '#e8e8e8',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: '100%',
+          height: '100%',
+          padding: '20px 28px',
+          border: '2px solid #303030',
+          borderRadius: 12,
+          backgroundColor: isOn ? '#101010' : '#fafaf6',
+          boxSizing: 'border-box',
         }}
       >
-        <span style={{ fontSize: 18, color: '#404040' }}>{label}</span>
-        <span style={{ fontSize: 24, fontWeight: 'bold', color: '#101010', marginTop: 8 }}>
-          {isOn ? 'ON' : 'OFF'}
-        </span>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <span
+            style={{
+              fontSize: 22,
+              color: isOn ? '#c0c0c0' : '#505050',
+              letterSpacing: 0.5,
+              textTransform: 'uppercase',
+            }}
+          >
+            {label}
+          </span>
+          <span
+            style={{
+              fontSize: 56,
+              fontWeight: 700,
+              color: isOn ? '#fafaf6' : '#101010',
+              lineHeight: 1.1,
+            }}
+          >
+            {isOn ? 'On' : 'Off'}
+          </span>
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 88,
+            height: 88,
+            borderRadius: 44,
+            border: `4px solid ${isOn ? '#fafaf6' : '#303030'}`,
+            fontSize: 56,
+            color: isOn ? '#fafaf6' : '#303030',
+          }}
+        >
+          {isOn ? '◉' : '○'}
+        </div>
       </div>
     );
   },

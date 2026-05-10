@@ -11,18 +11,15 @@ describe('authMiddleware', () => {
     expect(res).toBeNull();
   });
 
-  test('unprotected path / returns null', async () => {
+  test('unprotected path / returns null (browser dashboard)', async () => {
     const { authMiddleware } = await import('../server/auth');
     const res = authMiddleware(makeRequest('/'));
     expect(res).toBeNull();
   });
 
-  test('preview in dev mode bypasses auth', async () => {
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'development';
+  test('unprotected path /events returns null (browser dashboard)', async () => {
     const { authMiddleware } = await import('../server/auth');
-    const res = authMiddleware(makeRequest('/preview/kindle1'));
+    const res = authMiddleware(makeRequest('/events'));
     expect(res).toBeNull();
-    process.env.NODE_ENV = originalEnv;
   });
 });

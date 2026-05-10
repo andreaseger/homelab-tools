@@ -25,9 +25,28 @@ export const ClockWidget: WidgetSpec<ClockConfig> = {
     const dateStr = config.showDate ? formatDate(ctx.now) : null;
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', padding: 12 }}>
-        <div style={{ fontSize: 48, fontWeight: 'bold', color: '#101010' }}>{timeStr}</div>
-        {dateStr && <div style={{ fontSize: 20, color: '#606060', marginTop: 4 }}>{dateStr}</div>}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          width: '100%',
+          height: '100%',
+          padding: '4px 8px',
+        }}
+      >
+        <div
+          style={{
+            fontSize: 96,
+            fontWeight: 700,
+            color: '#101010',
+            lineHeight: 1,
+            letterSpacing: -2,
+          }}
+        >
+          {timeStr}
+        </div>
+        {dateStr && <div style={{ fontSize: 24, color: '#505050', marginTop: 6 }}>{dateStr}</div>}
       </div>
     );
   },

@@ -1,20 +1,17 @@
 import { resolveTap } from '../pager';
-import { devices } from '../devices';
+import { state, setPage } from '../state';
 import { callService } from '../hass';
 import { pageBus } from '../page-bus';
 
 export async function handleTouch(body: unknown): Promise<{ status: number; body: unknown }> {
   const data = body as Record<string, unknown>;
-  const device = data.device as string;
   const x = data.x as number;
   const y = data.y as number;
-  const etag = data.etag as string;
+  const etag = data.etag as string | undefined;
 
-  if (!device || x == null || y == null) {
-    return { status: 400, body: { error: 'missing device, x, or y' } };
+  if (x == null || y == null) {
+    return { status: 400, body: { error: 'missing x or y' } };
   }
-
-  const state = devices.getState(device);
 
   if (etag && state.currentEtag && etag !== state.currentEtag) {
     return { status: 409, body: { error: 'stale etag', currentEtag: state.currentEtag } };
@@ -35,7 +32,7 @@ export async function handleTouch(body: unknown): Promise<{ status: number; body
   }
 
   if (action.kind === 'navigate') {
-    state.currentPage = action.pageId;
+    setPage(action.pageId);
     pageBus.tick();
   }
 

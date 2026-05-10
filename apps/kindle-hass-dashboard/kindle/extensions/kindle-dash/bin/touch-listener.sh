@@ -15,7 +15,7 @@ fi
 # Read current etag from render loop
 get_etag() {
     curl -s -I -H "Authorization: Bearer $TOKEN" \
-        "$SERVER_URL/render?device=$DEVICE_ID" 2>/dev/null | grep -i etag | tr -d '\r' | awk '{print $2}'
+        "$SERVER_URL/render" 2>/dev/null | grep -i etag | tr -d '\r' | awk '{print $2}'
 }
 
 evtest "$EVENT_DEV" 2>/dev/null | while read -r line; do
@@ -32,7 +32,7 @@ evtest "$EVENT_DEV" 2>/dev/null | while read -r line; do
                 ETAG=$(get_etag)
                 curl -s -X POST -H "Content-Type: application/json" \
                     -H "Authorization: Bearer $TOKEN" \
-                    -d "{\"device\":\"$DEVICE_ID\",\"x\":$X,\"y\":$Y,\"etag\":\"$ETAG\"}" \
+                    -d "{\"x\":$X,\"y\":$Y,\"etag\":\"$ETAG\"}" \
                     "$SERVER_URL/touch" >/dev/null 2>&1
                 X=""
                 Y=""

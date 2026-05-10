@@ -13,14 +13,13 @@ export const PageTabsWidget: WidgetSpec<PageTabsConfig> = {
   id: 'page-tabs',
   entities: () => [],
   render: (config, ctx) => {
-    const tabWidth = Math.floor(ctx.device.width / config.pages.length);
+    const tabWidth = Math.floor(ctx.bbox.w / config.pages.length);
 
     const tabs = config.pages.map((page, i) => {
       const isActive = page.id === ctx.page.id;
       const action: Action = { kind: 'navigate', pageId: page.id };
-
       ctx.registerHotZone(
-        { x: i * tabWidth, y: 0, w: tabWidth, h: 56 },
+        { x: i * tabWidth, y: 0, w: tabWidth, h: ctx.bbox.h },
         action,
         `navigate:${page.id}`
       );
@@ -33,12 +32,11 @@ export const PageTabsWidget: WidgetSpec<PageTabsConfig> = {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '12px 24px',
-            fontSize: 20,
-            color: isActive ? '#101010' : '#404040',
-            backgroundColor: isActive ? '#ffffff' : '#e0e0e0',
-            fontWeight: isActive ? 'bold' : 'normal',
-            borderRight: i < config.pages.length - 1 ? '1px solid #a0a0a0' : 'none',
+            fontSize: 28,
+            fontWeight: isActive ? 700 : 500,
+            color: isActive ? '#fafaf6' : '#202020',
+            backgroundColor: isActive ? '#101010' : '#e8e4d8',
+            borderRight: i < config.pages.length - 1 ? '2px solid #303030' : 'none',
           }}
         >
           {page.label}
@@ -51,8 +49,10 @@ export const PageTabsWidget: WidgetSpec<PageTabsConfig> = {
         style={{
           display: 'flex',
           flexDirection: 'row',
-          border: '2px solid #808080',
-          borderRadius: 4,
+          width: '100%',
+          height: '100%',
+          border: '2px solid #303030',
+          borderRadius: 12,
           overflow: 'hidden',
         }}
       >
