@@ -50,6 +50,7 @@ COPY fluxcd ./fluxcd
 COPY bunfig.toml ./
 COPY tsconfig.json ./
 COPY entrypoint.sh ./
+COPY favicon.svg ./
 
 RUN bun build matter-plugin/src/index.ts --outdir matter-plugin/dist --target bun
 RUN chmod +x entrypoint.sh

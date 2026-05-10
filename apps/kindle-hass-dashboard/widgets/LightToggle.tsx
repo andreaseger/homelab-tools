@@ -19,9 +19,10 @@ export const LightToggleWidget: WidgetSpec<LightToggleConfig> = {
       config.entity.split('.')[1] ??
       config.entity;
 
+    const domain = config.entity.split('.')[0] ?? 'light';
     const action: Action = {
       kind: 'service',
-      domain: 'light',
+      domain,
       service: 'toggle',
       target: { entity_id: config.entity },
     };

@@ -20,6 +20,7 @@ export async function serveDashboard(): Promise<Response> {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=${result.width}, initial-scale=0.5">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <title>Kindle Dashboard</title>
 <style>
   html, body { margin: 0; padding: 0; background: #2a2a2a; min-height: 100vh; }

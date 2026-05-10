@@ -5,21 +5,41 @@ import { mkdirSync, existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const MOCK_ENTITIES: Record<string, unknown> = {
-  'sensor.living_room_temperature': {
+  'sensor.aq_monitor_w_display_kalman_temperature': {
     state: '22.5',
-    attributes: { friendly_name: 'Living Room', unit_of_measurement: '°C' },
+    attributes: { unit_of_measurement: '°C' },
   },
-  'sensor.bedroom_temperature': {
+  'sensor.esp32_c3_aq_monitor_v2_kalman_temperature': {
     state: '20.1',
-    attributes: { friendly_name: 'Bedroom', unit_of_measurement: '°C' },
+    attributes: { unit_of_measurement: '°C' },
   },
-  'sensor.outdoor_temperature': {
+  'sensor.temp_humidity_sensor_temperature': {
     state: '12.3',
-    attributes: { friendly_name: 'Outdoor', unit_of_measurement: '°C' },
+    attributes: { unit_of_measurement: '°C' },
   },
-  'sensor.living_room_humidity': {
+  'sensor.aq_monitor_w_display_scd41_humidity': {
     state: '45',
-    attributes: { friendly_name: 'Humidity', unit_of_measurement: '%' },
+    attributes: { unit_of_measurement: '%' },
+  },
+  'sensor.esp32_c3_aq_monitor_v2_kalman_humidity': {
+    state: '52',
+    attributes: { unit_of_measurement: '%' },
+  },
+  'sensor.temp_humidity_sensor_humidity': {
+    state: '68',
+    attributes: { unit_of_measurement: '%' },
+  },
+  'sensor.aq_monitor_w_display_scd41_co2_level': {
+    state: '720',
+    attributes: { unit_of_measurement: 'ppm' },
+  },
+  'sensor.esp32_c3_aq_monitor_v2_scd41_co2_level': {
+    state: '650',
+    attributes: { unit_of_measurement: 'ppm' },
+  },
+  'sensor.tze200_3towulqd_ts0601_illuminance_5': {
+    state: '420',
+    attributes: { unit_of_measurement: 'lx' },
   },
 };
 
@@ -92,18 +112,14 @@ describe('renderPng', () => {
     assertImageSnapshot(result.png, 'overview');
   });
 
-  test('snapshot matches baseline - lights', async () => {
-    setPage('lights');
+  test('snapshot matches baseline - controls', async () => {
+    setPage('controls');
     const entities: Record<string, unknown> = {
-      'light.living_room': { state: 'on', attributes: { friendly_name: 'Living Room' } },
-      'light.kitchen': { state: 'off', attributes: { friendly_name: 'Kitchen' } },
-      'light.bedroom': { state: 'on', attributes: { friendly_name: 'Bedroom' } },
-      'light.office': { state: 'off', attributes: { friendly_name: 'Office' } },
-      'light.hallway': { state: 'off', attributes: { friendly_name: 'Hallway' } },
-      'light.bathroom': { state: 'off', attributes: { friendly_name: 'Bathroom' } },
+      'light.office_hue_lamp_light': { state: 'on', attributes: {} },
+      'switch.plug_et20_6_coffeemachine': { state: 'off', attributes: {} },
     };
     const result = await renderPng(entities, FIXED_NOW);
-    assertImageSnapshot(result.png, 'lights');
+    assertImageSnapshot(result.png, 'controls');
     setPage('overview');
   });
 });

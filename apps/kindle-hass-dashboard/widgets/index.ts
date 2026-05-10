@@ -5,6 +5,7 @@ import { LightToggleWidget } from './LightToggle';
 import { LineGraphWidget } from './LineGraph';
 import { ClockWidget } from './Clock';
 import { PageTabsWidget } from './PageTabs';
+import { RoomClimateWidget } from './RoomClimate';
 
 const widgetRegistry = new Map<string, WidgetSpec>([
   ['sensor-value', SensorValueWidget as WidgetSpec],
@@ -13,6 +14,7 @@ const widgetRegistry = new Map<string, WidgetSpec>([
   ['line-graph', LineGraphWidget as WidgetSpec],
   ['clock', ClockWidget as WidgetSpec],
   ['page-tabs', PageTabsWidget as WidgetSpec],
+  ['room-climate', RoomClimateWidget as WidgetSpec],
 ]);
 
 export function getWidget(id: string): WidgetSpec | undefined {

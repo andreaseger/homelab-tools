@@ -13,9 +13,9 @@ describe('widget registry', () => {
     expect(getWidget('nonexistent')).toBeUndefined();
   });
 
-  test('listWidgets returns 6 widgets', () => {
+  test('listWidgets returns all registered widgets', () => {
     const widgets = listWidgets();
-    expect(widgets).toHaveLength(6);
+    expect(widgets).toHaveLength(7);
   });
 
   test('all widgets have id and render function', () => {

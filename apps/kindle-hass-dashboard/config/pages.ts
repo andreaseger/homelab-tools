@@ -6,32 +6,30 @@ import type { PageConfig } from '../shared/types';
 // Each page has a `layout: PlacedWidget[]` — every entry is one widget at
 // fixed pixel coordinates (the kindle is 1072×1448 — see config/dashboard.ts).
 //
-// Available widgets and their config:
+// The header bar at the top (HEADER_HEIGHT in render/page-view.tsx) shows
+// the page title, time, and date. y=0 in the layout is right below it.
+//
+// Available widgets:
 //
 //   sensor-value   { entity, label?, decimals? }
-//                  Numeric HASS state with unit; falls back to raw state.
-//
 //   binary-sensor  { entity, label?, iconOn?, iconOff? }
-//                  On/Off display for door / motion / window sensors.
+//   light-toggle   { entity, label? }            // <domain>.toggle from prefix
+//   line-graph     { entity? | series?: [{ entity, label? }], hours,
+//                    label?, yMin?, yMax?, bucketMinutes? }
+//                  Multi-series: first solid, second dashed.
+//   room-climate   { label, metrics: [{ entity, caption, decimals? }],
+//                    graph?: { entity, hours?, bucketMinutes?, label? } }
+//                  First metric is rendered larger; optional inline sparkline
+//                  whose y-axis auto-scales to the observed min/max.
+//   clock          { format?, showDate? }        // standalone clock widget
+//   page-tabs      { pages: [{ id, label }] }
 //
-//   light-toggle   { entity, label? }
-//                  Tap to call light.toggle on the entity.
-//
-//   line-graph     { entity, hours, label?, yMin?, yMax?, bucketMinutes? }
-//                  Line chart from HASS history (REST /api/history).
-//
-//   clock          { format?, showDate? }      // '24h' | '12h'
-//
-//   page-tabs      { pages: { id, label }[] }  // navigation between pages
-//
-// Coordinates: bbox is `{ x, y, w, h }` in pixels. The 60px header bar at the
-// top is added automatically — y=0 here is right under the header.
-// Widget bodies size themselves to fill their bbox.
+// Coordinates: bbox is `{ x, y, w, h }` in pixels. Widgets fill their bbox.
 
 const TABS = {
   pages: [
     { id: 'overview', label: 'Overview' },
-    { id: 'lights', label: 'Lights' },
+    { id: 'controls', label: 'Controls' },
   ],
 };
 
@@ -40,54 +38,84 @@ export const pages: PageConfig[] = [
     id: 'overview',
     title: 'Overview',
     layout: [
-      {
-        widget: 'clock',
-        bbox: { x: 24, y: 16, w: 500, h: 120 },
-        config: { format: '24h', showDate: true },
-      },
-      { widget: 'page-tabs', bbox: { x: 24, y: 152, w: 1024, h: 64 }, config: TABS },
+      { widget: 'page-tabs', bbox: { x: 24, y: 16, w: 1024, h: 64 }, config: TABS },
 
-      // Top sensor row
+      // Indoor — temp / humidity / CO2 + 6h CO2 sparkline
       {
-        widget: 'sensor-value',
-        bbox: { x: 24, y: 240, w: 328, h: 180 },
-        config: { entity: 'sensor.living_room_temperature', label: 'Living Room', decimals: 1 },
+        widget: 'room-climate',
+        bbox: { x: 24, y: 96, w: 1024, h: 220 },
+        config: {
+          label: 'Office',
+          metrics: [
+            {
+              entity: 'sensor.aq_monitor_w_display_kalman_temperature',
+              caption: 'Temperature',
+              decimals: 1,
+            },
+            { entity: 'sensor.aq_monitor_w_display_scd41_humidity', caption: 'Humidity' },
+            { entity: 'sensor.aq_monitor_w_display_scd41_co2_level', caption: 'CO2' },
+          ],
+          graph: {
+            entity: 'sensor.aq_monitor_w_display_scd41_co2_level',
+            hours: 6,
+            bucketMinutes: 15,
+            label: 'CO2 · 6H',
+          },
+        },
       },
       {
-        widget: 'sensor-value',
-        bbox: { x: 372, y: 240, w: 328, h: 180 },
-        config: { entity: 'sensor.bedroom_temperature', label: 'Bedroom', decimals: 1 },
-      },
-      {
-        widget: 'sensor-value',
-        bbox: { x: 720, y: 240, w: 328, h: 180 },
-        config: { entity: 'sensor.outdoor_temperature', label: 'Outdoor', decimals: 1 },
+        widget: 'room-climate',
+        bbox: { x: 24, y: 336, w: 1024, h: 220 },
+        config: {
+          label: 'Bedroom',
+          metrics: [
+            {
+              entity: 'sensor.esp32_c3_aq_monitor_v2_kalman_temperature',
+              caption: 'Temperature',
+              decimals: 1,
+            },
+            { entity: 'sensor.esp32_c3_aq_monitor_v2_kalman_humidity', caption: 'Humidity' },
+            { entity: 'sensor.esp32_c3_aq_monitor_v2_scd41_co2_level', caption: 'CO2' },
+          ],
+          graph: {
+            entity: 'sensor.esp32_c3_aq_monitor_v2_scd41_co2_level',
+            hours: 6,
+            bucketMinutes: 15,
+            label: 'CO2 · 6H',
+          },
+        },
       },
 
-      // Secondary sensors
+      // Outdoor — temp / humidity / illuminance, no inline graph
       {
-        widget: 'sensor-value',
-        bbox: { x: 24, y: 440, w: 328, h: 180 },
-        config: { entity: 'sensor.living_room_humidity', label: 'Humidity', decimals: 0 },
-      },
-      {
-        widget: 'binary-sensor',
-        bbox: { x: 372, y: 440, w: 328, h: 180 },
-        config: { entity: 'binary_sensor.front_door', label: 'Front Door' },
-      },
-      {
-        widget: 'binary-sensor',
-        bbox: { x: 720, y: 440, w: 328, h: 180 },
-        config: { entity: 'binary_sensor.living_room_motion', label: 'Motion' },
+        widget: 'room-climate',
+        bbox: { x: 24, y: 576, w: 1024, h: 220 },
+        config: {
+          label: 'Outdoor',
+          metrics: [
+            { entity: 'sensor.temp_humidity_sensor_temperature', caption: 'Temperature', decimals: 1 },
+            { entity: 'sensor.temp_humidity_sensor_humidity', caption: 'Humidity' },
+            { entity: 'sensor.tze200_3towulqd_ts0601_illuminance_5', caption: 'Light' },
+          ],
+          graph: {
+            entity: 'sensor.temp_humidity_sensor_temperature',
+            hours: 12,
+            bucketMinutes: 15,
+            label: 'Temperature · 12H',
+          },
+        },
       },
 
-      // 24h trend graph
+      // Outdoor + bedroom temperature comparison (24h)
       {
         widget: 'line-graph',
-        bbox: { x: 24, y: 640, w: 1024, h: 360 },
+        bbox: { x: 24, y: 816, w: 1024, h: 524 },
         config: {
-          entity: 'sensor.outdoor_temperature',
-          label: 'Outdoor temp · 24h',
+          series: [
+            { entity: 'sensor.temp_humidity_sensor_temperature', label: 'Outdoor' },
+            { entity: 'sensor.aq_monitor_w_display_kalman_temperature', label: 'Office' },
+          ],
+          label: 'Temperature · 24h',
           hours: 24,
           bucketMinutes: 30,
         },
@@ -95,40 +123,20 @@ export const pages: PageConfig[] = [
     ],
   },
   {
-    id: 'lights',
-    title: 'Lights',
+    id: 'controls',
+    title: 'Controls',
     layout: [
       { widget: 'page-tabs', bbox: { x: 24, y: 16, w: 1024, h: 64 }, config: TABS },
 
       {
         widget: 'light-toggle',
         bbox: { x: 24, y: 104, w: 504, h: 180 },
-        config: { entity: 'light.living_room', label: 'Living Room' },
+        config: { entity: 'light.office_hue_lamp_light', label: 'Office Light' },
       },
       {
         widget: 'light-toggle',
         bbox: { x: 544, y: 104, w: 504, h: 180 },
-        config: { entity: 'light.kitchen', label: 'Kitchen' },
-      },
-      {
-        widget: 'light-toggle',
-        bbox: { x: 24, y: 304, w: 504, h: 180 },
-        config: { entity: 'light.bedroom', label: 'Bedroom' },
-      },
-      {
-        widget: 'light-toggle',
-        bbox: { x: 544, y: 304, w: 504, h: 180 },
-        config: { entity: 'light.office', label: 'Office' },
-      },
-      {
-        widget: 'light-toggle',
-        bbox: { x: 24, y: 504, w: 504, h: 180 },
-        config: { entity: 'light.hallway', label: 'Hallway' },
-      },
-      {
-        widget: 'light-toggle',
-        bbox: { x: 544, y: 504, w: 504, h: 180 },
-        config: { entity: 'light.bathroom', label: 'Bathroom' },
+        config: { entity: 'switch.plug_et20_6_coffeemachine', label: 'Coffee Machine' },
       },
     ],
   },

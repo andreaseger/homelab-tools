@@ -62,6 +62,13 @@ const server = serve({
       GET: () => serveDashboard(),
     },
 
+    '/favicon.svg': {
+      GET: () =>
+        new Response(Bun.file(new URL('../favicon.svg', import.meta.url).pathname), {
+          headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'public, max-age=86400' },
+        }),
+    },
+
     '/fragment': {
       GET: () => serveFragment(),
     },

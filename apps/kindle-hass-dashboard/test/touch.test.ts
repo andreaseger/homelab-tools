@@ -46,13 +46,13 @@ describe('handleTouch', () => {
     state.currentEtag = '"nav"';
     state.currentPage = 'overview';
     state.touchmap = [
-      { bbox: { x: 0, y: 0, w: 500, h: 100 }, action: { kind: 'navigate', pageId: 'lights' } },
+      { bbox: { x: 0, y: 0, w: 500, h: 100 }, action: { kind: 'navigate', pageId: 'controls' } },
     ];
 
     const result = await handleTouch({ x: 100, y: 50, etag: '"nav"' });
     expect(result.status).toBe(200);
     expect(result.body).toEqual({ action: 'navigate' });
-    expect(state.currentPage).toBe('lights');
+    expect(state.currentPage).toBe('controls');
   });
 
   test('no etag provided skips etag check', async () => {

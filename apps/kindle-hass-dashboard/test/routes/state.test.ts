@@ -16,10 +16,10 @@ describe('serveState', () => {
   });
 
   test('reflects setPage', async () => {
-    setPage('lights');
+    setPage('controls');
     const res = serveState();
     const data = (await res.json()) as { current_page: string };
-    expect(data.current_page).toBe('lights');
+    expect(data.current_page).toBe('controls');
     setPage('overview');
   });
 

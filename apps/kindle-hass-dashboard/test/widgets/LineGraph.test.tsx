@@ -64,4 +64,31 @@ describe('LineGraphWidget', () => {
   test('defaults are hours=24, bucketMinutes=30', () => {
     expect(LineGraphWidget.defaults).toEqual({ hours: 24, bucketMinutes: 30 });
   });
+
+  test('multi-series config renders both series', async () => {
+    const history: HistoryEntry[] = [
+      { timestamp: Date.now() - 1800000, value: 18 },
+      { timestamp: Date.now() - 600000, value: 19 },
+    ];
+    const el = await LineGraphWidget.render(
+      {
+        series: [
+          { entity: 'sensor.outdoor', label: 'Outdoor' },
+          { entity: 'sensor.bedroom', label: 'Bedroom' },
+        ],
+        hours: 1,
+      },
+      makeCtx(history)
+    );
+    expect(el).toBeDefined();
+  });
+
+  test('entities returns all series entities when configured', () => {
+    expect(
+      LineGraphWidget.entities!({
+        series: [{ entity: 'sensor.a' }, { entity: 'sensor.b' }],
+        hours: 24,
+      })
+    ).toEqual(['sensor.a', 'sensor.b']);
+  });
 });

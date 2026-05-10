@@ -11,7 +11,7 @@ import { getWidget } from '../../widgets';
 
 export type FetchHistoryFn = (entityIds: string[], hours: number) => Promise<HistoryEntry[]>;
 
-export const HEADER_HEIGHT = 60;
+export const HEADER_HEIGHT = 96;
 
 interface ResolvedItem {
   placed: PlacedWidget;
@@ -134,16 +134,32 @@ export function PageView(props: PageViewProps): React.ReactElement {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '12px 24px',
+          padding: '12px 28px',
           borderBottom: '3px solid #2a2a2a',
           height: HEADER_HEIGHT,
           boxSizing: 'border-box',
         }}
       >
-        <span style={{ fontSize: 36, fontWeight: 700, color: '#101010' }}>{props.page.title}</span>
-        <span style={{ fontSize: 22, color: '#404040' }}>
-          {props.now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-        </span>
+        <span style={{ fontSize: 44, fontWeight: 700, color: '#101010' }}>{props.page.title}</span>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+          }}
+        >
+          <span style={{ fontSize: 56, fontWeight: 700, color: '#101010', lineHeight: 1 }}>
+            {props.now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+          </span>
+          <span style={{ fontSize: 20, color: '#505050', marginTop: 4 }}>
+            {props.now.toLocaleDateString('en-GB', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+            })}
+          </span>
+        </div>
       </div>
       {elements}
     </div>

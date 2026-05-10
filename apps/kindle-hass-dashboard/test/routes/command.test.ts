@@ -37,10 +37,10 @@ describe('serveCommand', () => {
   test('POST set_page changes page', async () => {
     setPage('overview');
     const res = await serveCommand(
-      req('/command', { method: 'POST', body: { kind: 'set_page', pageId: 'lights' } })
+      req('/command', { method: 'POST', body: { kind: 'set_page', pageId: 'controls' } })
     );
     expect(res.status).toBe(200);
-    expect(state.currentPage).toBe('lights');
+    expect(state.currentPage).toBe('controls');
     setPage('overview');
   });
 
