@@ -52,8 +52,7 @@ export const LineGraphWidget: WidgetSpec<LineGraphConfig> = {
   entities: (config) => normaliseSeries(config).map((s) => s.entity),
   render: async (config, ctx) => {
     const seriesCfg = normaliseSeries(config);
-    const label =
-      config.label ?? `${seriesCfg[0]?.entity.split('.')[1] ?? ''} · ${config.hours}h`;
+    const label = config.label ?? `${seriesCfg[0]?.entity.split('.')[1] ?? ''} · ${config.hours}h`;
 
     const graphWidth = ctx.bbox.w;
     const graphHeight = ctx.bbox.h;
@@ -86,9 +85,7 @@ export const LineGraphWidget: WidgetSpec<LineGraphConfig> = {
 
     const seriesPaths = seriesPoints.map((s, i) => {
       const path = s.points
-        .map(
-          (p, j) => `${j === 0 ? 'M' : 'L'} ${toX(p.t).toFixed(1)} ${toY(p.v).toFixed(1)}`
-        )
+        .map((p, j) => `${j === 0 ? 'M' : 'L'} ${toX(p.t).toFixed(1)} ${toY(p.v).toFixed(1)}`)
         .join(' ');
       const dasharray = strokeStyles[i % strokeStyles.length];
       return path
@@ -102,7 +99,9 @@ export const LineGraphWidget: WidgetSpec<LineGraphConfig> = {
         ? `M ${toX(firstPoints[0]!.t).toFixed(1)} ${toY(firstPoints[0]!.v).toFixed(1)} ${firstPoints
             .slice(1)
             .map((p) => `L ${toX(p.t).toFixed(1)} ${toY(p.v).toFixed(1)}`)
-            .join(' ')} L ${toX(firstPoints[firstPoints.length - 1]!.t).toFixed(1)} ${(padding.top + innerH).toFixed(1)} L ${toX(firstPoints[0]!.t).toFixed(1)} ${(padding.top + innerH).toFixed(1)} Z`
+            .join(
+              ' '
+            )} L ${toX(firstPoints[firstPoints.length - 1]!.t).toFixed(1)} ${(padding.top + innerH).toFixed(1)} L ${toX(firstPoints[0]!.t).toFixed(1)} ${(padding.top + innerH).toFixed(1)} Z`
         : '';
 
     const nGrid = 4;
@@ -117,7 +116,13 @@ export const LineGraphWidget: WidgetSpec<LineGraphConfig> = {
       );
     }
 
-    const xTickHours = [0, config.hours / 4, config.hours / 2, (config.hours * 3) / 4, config.hours];
+    const xTickHours = [
+      0,
+      config.hours / 4,
+      config.hours / 2,
+      (config.hours * 3) / 4,
+      config.hours,
+    ];
     const xTicks = xTickHours.map((h, i, arr) => {
       const t = now - h * 60 * 60 * 1000;
       return {

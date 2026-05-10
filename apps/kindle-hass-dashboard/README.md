@@ -38,13 +38,13 @@ pnpm nx run kindle-hass-dashboard:docker:build
 
 ## Environment
 
-| Var                  | Required | Default     | Purpose                                        |
-| -------------------- | -------- | ----------- | ---------------------------------------------- |
-| `HASS_URL`           | yes      | —           | HASS URL, e.g. `http://home-assistant.svc:8123`|
-| `HASS_TOKEN`         | yes      | —           | HASS long-lived access token                   |
-| `DASHBOARD_TOKEN`    | yes      | —           | Bearer token for `/render`, `/touch`, etc.     |
-| `PORT`               | no       | 8080        | HTTP port                                      |
-| `LOG_LEVEL`          | no       | info        | Logging level                                  |
-| `RENDER_DEBOUNCE_MS` | no       | 500         | Coalesce burst HASS events                     |
-| `NODE_ENV`           | no       | development | —                                              |
-| `EXPOSE_ENABLED`     | no       | false       | Enable matterbridge `/state` + `/command`      |
+| Var                  | Required | Default     | Purpose                                         |
+| -------------------- | -------- | ----------- | ----------------------------------------------- |
+| `HASS_URL`           | yes      | —           | HASS URL, e.g. `http://home-assistant.svc:8123` |
+| `HASS_TOKEN`         | yes      | —           | HASS long-lived access token                    |
+| `DASHBOARD_TOKEN`    | yes      | —           | Bearer token for `/render`, `/touch`, etc.      |
+| `PORT`               | no       | 8080        | HTTP port                                       |
+| `LOG_LEVEL`          | no       | info        | Logging level                                   |
+| `RENDER_DEBOUNCE_MS` | no       | 500         | Coalesce burst HASS events                      |
+| `NODE_ENV`           | no       | development | —                                               |
+| `EXPOSE_ENABLED`     | no       | false       | Enable matterbridge `/state` + `/command`       |

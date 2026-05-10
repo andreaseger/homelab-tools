@@ -37,9 +37,7 @@ onEntitiesChange((entities) => {
 
   const changed = new Set<string>();
   for (const id of watched) {
-    const entity = entities[id] as
-      | { state?: string; last_updated?: string }
-      | undefined;
+    const entity = entities[id] as { state?: string; last_updated?: string } | undefined;
     if (!entity) continue;
     const fp = entity.last_updated ?? entity.state ?? '';
     if (entityFingerprints.get(id) !== fp) {

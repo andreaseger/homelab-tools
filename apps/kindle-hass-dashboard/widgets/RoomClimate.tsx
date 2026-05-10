@@ -155,10 +155,12 @@ export const RoomClimateWidget: WidgetSpec<RoomClimateConfig> = {
       const H = 160;
       const observedMin = points.length ? Math.min(...points.map((p) => p.v)) : 0;
       const observedMax = points.length ? Math.max(...points.map((p) => p.v)) : 1;
-      const { min: yMin, max: yMax, ticks: yTicks, decimals: yDec } = niceScale(
-        observedMin,
-        observedMax
-      );
+      const {
+        min: yMin,
+        max: yMax,
+        ticks: yTicks,
+        decimals: yDec,
+      } = niceScale(observedMin, observedMax);
       const yRange = yMax - yMin || 1;
       const padLeft = 44;
       const padRight = 6;
@@ -177,7 +179,9 @@ export const RoomClimateWidget: WidgetSpec<RoomClimateConfig> = {
         path && points.length
           ? `${path} L ${toX(points[lastIdx]!.t).toFixed(1)} ${(padTop + innerH).toFixed(1)} L ${toX(points[0]!.t).toFixed(1)} ${(padTop + innerH).toFixed(1)} Z`
           : '';
-      const headerLabel = config.graph.label ?? `${config.graph.entity.split('.')[1]?.slice(0, 12) ?? ''} · ${hours}H`;
+      const headerLabel =
+        config.graph.label ??
+        `${config.graph.entity.split('.')[1]?.slice(0, 12) ?? ''} · ${hours}H`;
 
       const yGridSvg = yTicks
         .map(

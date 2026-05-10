@@ -11,7 +11,11 @@ const configPath = process.env.PAGES_CONFIG ?? resolve(import.meta.dir, 'pages.y
 const text = readFileSync(configPath, 'utf8');
 const parsed = Bun.YAML.parse(text);
 
-if (!parsed || typeof parsed !== 'object' || !Array.isArray((parsed as { pages?: unknown }).pages)) {
+if (
+  !parsed ||
+  typeof parsed !== 'object' ||
+  !Array.isArray((parsed as { pages?: unknown }).pages)
+) {
   throw new Error(`Invalid pages config at ${configPath}: expected { pages: [...] }`);
 }
 
