@@ -10,7 +10,6 @@ TOUCH_PID=$(cat /var/run/kindle-dash/touch.pid 2>/dev/null)
 if [ -n "$RENDER_PID" ] && kill -0 "$RENDER_PID" 2>/dev/null; then
     eips "Dashboard: RUNNING"
     eips "Server: $SERVER_URL"
-    eips "Device: $DEVICE_ID"
 else
     eips "Dashboard: STOPPED"
 fi

@@ -1,30 +1,53 @@
 #!/bin/sh
-# Render loop - polls /render every 3s and updates screen via eips
+# Render loop - polls /render and updates screen via eips.
+# Backs off on connection errors so a server outage doesn't drain the battery.
 DIR="$(dirname "$0")/.."
 CONF="$DIR/etc/kindle-dash.conf"
 . "$CONF"
 
+# Inherit CURL_OPTS from start.sh; fall back when invoked standalone.
+if [ -z "$CURL_OPTS" ]; then
+    CURL_OPTS="-m 10"
+    [ "$INSECURE_TLS" = "1" ] && CURL_OPTS="$CURL_OPTS -k"
+fi
+
 ETAG=""
 OUT_PNG="/var/tmp/kindle-dash-out.png"
 HEADERS="/var/tmp/kindle-dash-headers.txt"
+FAIL=0
 
 while true; do
     if [ -n "$ETAG" ]; then
-        HTTP_CODE=$(curl -s -D "$HEADERS" -w "%{http_code}" \
+        HTTP_CODE=$(curl -s -D "$HEADERS" -w "%{http_code}" $CURL_OPTS \
             -H "If-None-Match: $ETAG" \
             -H "Authorization: Bearer $TOKEN" \
             "$SERVER_URL/render" -o "$OUT_PNG" 2>/dev/null)
     else
-        HTTP_CODE=$(curl -s -D "$HEADERS" -w "%{http_code}" \
+        HTTP_CODE=$(curl -s -D "$HEADERS" -w "%{http_code}" $CURL_OPTS \
             -H "Authorization: Bearer $TOKEN" \
             "$SERVER_URL/render" -o "$OUT_PNG" 2>/dev/null)
     fi
 
-    if [ "$HTTP_CODE" = "200" ]; then
-        NEW_ETAG=$(grep -i '^etag:' "$HEADERS" | tr -d '\r' | awk '{print $2}')
-        [ -n "$NEW_ETAG" ] && ETAG="$NEW_ETAG"
-        eips -g "$OUT_PNG"
-    fi
-
-    sleep 3
+    case "$HTTP_CODE" in
+        200)
+            NEW_ETAG=$(grep -i '^etag:' "$HEADERS" | tr -d '\r' | awk '{print $2}')
+            [ -n "$NEW_ETAG" ] && ETAG="$NEW_ETAG"
+            eips -g "$OUT_PNG"
+            FAIL=0
+            sleep 3
+            ;;
+        304)
+            FAIL=0
+            sleep 3
+            ;;
+        *)
+            # 0 (no connection), 5xx, 401, etc. — back off so we don't spin.
+            FAIL=$((FAIL + 1))
+            if [ $FAIL -ge 3 ]; then
+                sleep 60
+            else
+                sleep 15
+            fi
+            ;;
+    esac
 done

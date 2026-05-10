@@ -19,5 +19,5 @@ scp "$EXT_DIR/etc/kindle-dash.conf" root@"$KINDLE_IP":/mnt/us/extensions/kindle-
 # Make scripts executable
 ssh root@"$KINDLE_IP" "chmod +x /mnt/us/extensions/kindle-dash/bin/*.sh"
 
-echo "Installation complete. Edit /mnt/us/extensions/kindle-dash/etc/kindle-dash.conf on the Kindle to set SERVER_URL, DEVICE_ID, and TOKEN."
+echo "Installation complete. Edit /mnt/us/extensions/kindle-dash/etc/kindle-dash.conf on the Kindle to set SERVER_URL and TOKEN."
 echo "Then restart KUAL to see the Dashboard menu."
