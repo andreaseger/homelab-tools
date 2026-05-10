@@ -15,6 +15,8 @@ ETAG=""
 OUT_PNG="/var/tmp/kindle-dash-out.png"
 HEADERS="/var/tmp/kindle-dash-headers.txt"
 FAIL=0
+FRAME=0
+FULL_REFRESH_EVERY="${FULL_REFRESH_EVERY:-10}"
 
 while true; do
     if [ -n "$ETAG" ]; then
@@ -32,7 +34,13 @@ while true; do
         200)
             NEW_ETAG=$(grep -i '^etag:' "$HEADERS" | tr -d '\r' | awk '{print $2}')
             [ -n "$NEW_ETAG" ] && ETAG="$NEW_ETAG"
-            eips -g "$OUT_PNG"
+            FRAME=$((FRAME + 1))
+            if [ "$FULL_REFRESH_EVERY" -gt 0 ] \
+               && [ $((FRAME % FULL_REFRESH_EVERY)) -eq 0 ]; then
+                eips -f -g "$OUT_PNG"
+            else
+                eips -g "$OUT_PNG"
+            fi
             FAIL=0
             sleep 3
             ;;

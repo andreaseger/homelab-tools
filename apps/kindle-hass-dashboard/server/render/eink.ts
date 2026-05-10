@@ -54,10 +54,21 @@ export async function ditherToEink(png: Uint8Array): Promise<Uint8Array> {
     }
   }
 
-  return sharp(pixels, {
-    raw: { width, height, channels },
+  // Pack into a single-channel grayscale buffer. eips on the Kindle expects
+  // 8-bit grayscale PNGs (matches the framebuffer's bits_per_pixel: 8,
+  // grayscale: 1). Feeding it RGBA causes a horizontal stretch because the
+  // decoded channel layout doesn't match what eips writes into the FB.
+  const gray = new Uint8Array(width * height);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      gray[y * width + x] = pixels[y * rowStride + x * channels]!;
+    }
+  }
+
+  return sharp(gray, {
+    raw: { width, height, channels: 1 },
   })
-    .grayscale()
+    .toColourspace('b-w')
     .png()
     .toBuffer() as unknown as Uint8Array;
 }

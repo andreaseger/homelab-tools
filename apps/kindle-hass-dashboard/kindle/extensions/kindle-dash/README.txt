@@ -33,9 +33,9 @@ Usage:
   drained, and recovers automatically when the server returns.
 - Tap buttons/tabs to interact (light toggle, page navigation).
 - To stop and return to normal Kindle operation, EITHER:
-    * tap the page header (the band with the title and clock) three
-      times within 3 seconds — this is the only stop gesture reachable
-      while the dashboard owns the screen and touch input, OR
+    * tap the [X] button in the top-left of the screen — this is the
+      only stop gesture reachable while the dashboard owns the screen
+      and touch input, OR
     * SSH in and run /mnt/us/extensions/kindle-dash/bin/stop.sh, OR
     * use KUAL -> Kindle Dashboard -> Stop Dashboard (only reachable if
       KUAL is somehow on top, e.g. after a power-button restart).

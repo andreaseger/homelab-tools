@@ -3,6 +3,8 @@
 # Pass --skip-touch when invoked from the touch listener's exit gesture so we
 # don't kill our own caller mid-execution; the listener exits itself afterward.
 DIR="$(dirname "$0")/.."
+CONF="$DIR/etc/kindle-dash.conf"
+[ -f "$CONF" ] && . "$CONF"
 SKIP_TOUCH=""
 [ "$1" = "--skip-touch" ] && SKIP_TOUCH=1
 
@@ -16,12 +18,20 @@ for name in render touch command; do
 done
 
 # Allow screensaver again
-lipc-set-prop com.lab126.powerd preventScreenSaver 0
+lipc-set-prop com.lab126.powerd preventScreenSaver 0 2>/dev/null
 
 # Restore original screen
 eips -c
 
 rm -f /var/run/kindle-dash/render.pid /var/run/kindle-dash/touch.pid /var/run/kindle-dash/command.pid /var/run/kindle-dash/pid
+
+# Bring the Kindle UI back if start.sh stopped it.
+if [ "${STOP_FRAMEWORK:-1}" = "1" ]; then
+    start framework 2>/dev/null
+fi
+
+# Restore auto-rotation so the Kindle UI can switch orientations normally.
+lipc-set-prop com.lab126.winmgr orientationLock U 2>/dev/null
 
 eips "Dashboard stopped"
 sleep 1

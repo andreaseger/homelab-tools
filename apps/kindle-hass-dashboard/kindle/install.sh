@@ -12,6 +12,7 @@ echo "Installing Kindle Dashboard to $KINDLE_IP..."
 ssh root@"$KINDLE_IP" "mkdir -p /mnt/us/extensions/kindle-dash/{bin,etc}"
 
 # Copy files
+scp "$EXT_DIR/config.xml" root@"$KINDLE_IP":/mnt/us/extensions/kindle-dash/
 scp "$EXT_DIR/menu.json" root@"$KINDLE_IP":/mnt/us/extensions/kindle-dash/
 scp "$EXT_DIR/bin/"*.sh root@"$KINDLE_IP":/mnt/us/extensions/kindle-dash/bin/
 scp "$EXT_DIR/etc/kindle-dash.conf" root@"$KINDLE_IP":/mnt/us/extensions/kindle-dash/etc/

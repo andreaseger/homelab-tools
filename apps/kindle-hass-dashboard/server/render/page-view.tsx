@@ -133,20 +133,42 @@ export function PageView(props: PageViewProps): React.ReactElement {
           display: 'flex',
           flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'space-between',
           padding: '12px 28px',
           borderBottom: '3px solid #2a2a2a',
           height: HEADER_HEIGHT,
           boxSizing: 'border-box',
         }}
       >
-        <span style={{ fontSize: 44, fontWeight: 700, color: '#101010' }}>{props.page.title}</span>
+        {/* Stop button. The kindle's touch-listener.sh detects taps inside
+            x<96 && y<96 locally and runs stop.sh — this button is the visual
+            cue, not a server hot zone. Browsers ignore it. */}
+        <div
+          style={{
+            width: 72,
+            height: 72,
+            border: '3px solid #2a2a2a',
+            borderRadius: 8,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 44,
+            fontWeight: 700,
+            color: '#101010',
+            backgroundColor: '#fafaf6',
+          }}
+        >
+          X
+        </div>
+        <span style={{ fontSize: 44, fontWeight: 700, color: '#101010', marginLeft: 24 }}>
+          {props.page.title}
+        </span>
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-end',
             justifyContent: 'center',
+            marginLeft: 'auto',
           }}
         >
           <span style={{ fontSize: 56, fontWeight: 700, color: '#101010', lineHeight: 1 }}>

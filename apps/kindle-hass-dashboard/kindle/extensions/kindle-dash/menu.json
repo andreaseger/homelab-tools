@@ -1,22 +1,28 @@
 {
-  "name": "Kindle Dashboard",
-  "description": "Home Assistant Dashboard",
-  "priority": 0,
-  "items": [
-    {
-      "name": "Start Dashboard",
-      "priority": 1,
-      "action": "./bin/start.sh"
-    },
-    {
-      "name": "Stop Dashboard",
-      "priority": 2,
-      "action": "./bin/stop.sh"
-    },
-    {
-      "name": "Status",
-      "priority": 3,
-      "action": "./bin/status.sh"
-    }
-  ]
+    "items": [
+        {
+            "name": "Kindle Dashboard",
+            "priority": 0,
+            "items": [
+                {
+                    "name": "Start Dashboard",
+                    "priority": 1,
+                    "action": "bin/start.sh",
+                    "exitmenu": true
+                },
+                {
+                    "name": "Stop Dashboard",
+                    "priority": 2,
+                    "action": "bin/stop.sh",
+                    "exitmenu": true
+                },
+                {
+                    "name": "Status",
+                    "priority": 3,
+                    "action": "bin/status.sh",
+                    "exitmenu": true
+                }
+            ]
+        }
+    ]
 }

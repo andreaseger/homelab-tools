@@ -39,6 +39,10 @@ LABEL org.opencontainers.image.description="Kindle Paperwhite HASS Dashboard Ser
 WORKDIR /app
 
 COPY --from=builder /deploy/node_modules ./node_modules
+# Matterbridge reads /app/package.json on startup (logNodeAndSystemInfo), so
+# we need the pnpm-deploy-generated manifest in the runtime image alongside
+# its node_modules — not just the modules tree.
+COPY --from=builder /deploy/package.json ./package.json
 
 COPY server ./server
 COPY widgets ./widgets

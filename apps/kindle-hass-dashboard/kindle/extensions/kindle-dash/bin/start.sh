@@ -59,3 +59,17 @@ echo $! > /var/run/kindle-dash/command.pid
 
 eips "Dashboard started"
 sleep 1
+
+# Lock orientation to portrait so the framebuffer rotation stays at 0 after
+# the Kindle UI framework stops. Without this, the fb may be stuck at
+# rotate: 3 (landscape) from a previous UI rotation, causing the 1072×1448
+# portrait PNG to display stretched or clipped.
+lipc-set-prop com.lab126.winmgr orientationLock P 2>/dev/null
+
+# Stop the Kindle UI framework so its native UI doesn't compete for the
+# screen and react to taps that bleed through evtest. Delayed so KUAL
+# (which runs inside framework) has time to close its launcher cleanly
+# first — otherwise KUAL crashes mid-action.
+if [ "${STOP_FRAMEWORK:-1}" = "1" ]; then
+    ( sleep 5; stop framework 2>/dev/null ) &
+fi
