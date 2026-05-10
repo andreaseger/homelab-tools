@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kindle-hass-dashboard
+  labels:
+    app.kubernetes.io/name: kindle-hass-dashboard
+    app.kubernetes.io/instance: kindle-hass-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kindle-hass-dashboard
+      app.kubernetes.io/instance: kindle-hass-dashboard
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kindle-hass-dashboard
+        app.kubernetes.io/instance: kindle-hass-dashboard
+    spec:
+      containers:
+        - name: kindle-hass-dashboard
+          image: ghcr.io/andreaseger/kindle-hass-dashboard:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: 'production'
+            - name: PORT
+              value: '8080'
+            # Set to 'true' to expose the dashboard back to HASS via Matter.
+            # Requires hostNetwork: true on this pod for mDNS to work.
+            - name: EXPOSE_ENABLED
+              value: 'false'
+            - name: MATTERBRIDGE_DIR
+              value: /root/.matterbridge
+            - name: PAGES_CONFIG
+              value: /etc/dashboard/pages.yaml
+            - name: HASS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: kindle-hass-dashboard
+                  key: HASS_URL
+            - name: HASS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: kindle-hass-dashboard
+                  key: HASS_TOKEN
+            - name: DASHBOARD_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: kindle-hass-dashboard
+                  key: DASHBOARD_TOKEN
+          volumeMounts:
+            - name: matter
+              mountPath: /root/.matterbridge
+            - name: pages-config
+              mountPath: /etc/dashboard
+              readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 3
+          resources:
+            limits:
+              cpu: 500m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 64Mi
+      volumes:
+        - name: matter
+          persistentVolumeClaim:
+            claimName: kindle-hass-dashboard-matter
+        - name: pages-config
+          configMap:
+            name: kindle-hass-dashboard-pages
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kindle-hass-dashboard
+  labels:
+    app.kubernetes.io/name: kindle-hass-dashboard
+    app.kubernetes.io/instance: kindle-hass-dashboard
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: kindle-hass-dashboard
+    app.kubernetes.io/instance: kindle-hass-dashboard

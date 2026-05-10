@@ -1,0 +1,25 @@
+import { z } from 'zod';
+import type { PageConfig } from '../shared/types';
+
+const bboxSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  w: z.number().positive(),
+  h: z.number().positive(),
+});
+
+const placedWidgetSchema = z.object({
+  widget: z.string(),
+  bbox: bboxSchema,
+  config: z.unknown(),
+});
+
+export const pageConfigSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1),
+  layout: z.array(placedWidgetSchema).min(1),
+});
+
+export function validatePages(data: unknown): PageConfig[] {
+  return z.array(pageConfigSchema).parse(data) as PageConfig[];
+}

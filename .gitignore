@@ -34,6 +34,7 @@ yarn-error.log
 error.log
 testem.log
 /typings
+*.actual.png
 
 # System Files
 .DS_Store
@@ -47,3 +48,4 @@ Thumbs.db
 .nx/polygraph
 
 .claude/settings.local.json
+.env

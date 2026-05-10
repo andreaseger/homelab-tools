@@ -1,0 +1,65 @@
+{
+  "name": "kindle-hass-dashboard",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/kindle-hass-dashboard",
+  "tags": ["npm:private", "platform:amd64"],
+  "targets": {
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun --hot server/index.ts",
+        "cwd": "{projectRoot}",
+        "env": {
+          "NODE_ENV": "development"
+        }
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun tsc --noEmit",
+        "cwd": "{projectRoot}"
+      },
+      "cache": true
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun test",
+        "cwd": "{projectRoot}"
+      },
+      "cache": true
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec oxlint --config .oxlintrc.json apps/kindle-hass-dashboard",
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": true
+    },
+    "format": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec prettier --check \"apps/kindle-hass-dashboard/**/*.{ts,tsx,js,json,yaml,yml,md}\"",
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": true
+    },
+    "format:write": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm exec prettier --write \"apps/kindle-hass-dashboard/**/*.{ts,tsx,js,json,yaml,yml,md}\"",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "docker:build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker build -t kindle-hass-dashboard --build-context workspace=. -f apps/kindle-hass-dashboard/Dockerfile apps/kindle-hass-dashboard",
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  }
+}

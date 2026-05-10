@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "types": ["bun-types"],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "server/**/*.ts",
+    "server/**/*.tsx",
+    "widgets/**/*.ts",
+    "widgets/**/*.tsx",
+    "shared/**/*.ts",
+    "config/**/*.ts",
+    "test/**/*.ts"
+  ],
+  "exclude": ["node_modules"]
+}

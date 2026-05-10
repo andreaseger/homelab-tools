@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kindle-hass-dashboard
+  labels:
+    app.kubernetes.io/name: kindle-hass-dashboard
+  annotations:
+    gethomepage.dev/enabled: 'true'
+    gethomepage.dev/name: 'Kindle Dashboard'
+    gethomepage.dev/description: 'E-ink Home Assistant dashboard for Kindle'
+    gethomepage.dev/icon: 'sh-tablet.svg'
+    gethomepage.dev/group: 'home'
+spec:
+  rules:
+    - host: kindle-dashboard.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kindle-hass-dashboard
+                port:
+                  number: 8080
