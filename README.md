@@ -12,8 +12,6 @@ updating one app never means touching another.
 
 - **[homelab-k8s-dashboard](apps/homelab-k8s-dashboard)** — dashboard of deployed
   container images and Helm charts (Vue 3 + Express 5, Node runtime)
-- **[api-portal](apps/api-portal)** — OpenAPI/AsyncAPI spec portal (React + Bun)
-- **[obsidian-syncer](apps/obsidian-syncer)** — headless Obsidian vault sync (Bun)
 
 ## Prerequisites
 
@@ -79,9 +77,7 @@ To add an app, create `apps/<app>/` with a `package.json` (including
 ```
 homelab-tools/
 ├── apps/
-│   ├── api-portal/            # own package.json + pnpm-lock.yaml + Dockerfile
-│   ├── homelab-k8s-dashboard/
-│   └── obsidian-syncer/
+│   └── homelab-k8s-dashboard/  # own package.json + pnpm-lock.yaml + Dockerfile
 ├── .github/workflows/ci.yml   # shared by all apps
 ├── .tool-versions             # node / bun / pnpm — single source of truth
 └── package.json               # repo tooling only (Prettier)
