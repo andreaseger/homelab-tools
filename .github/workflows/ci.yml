@@ -83,6 +83,9 @@ jobs:
           MATRIX='[]'
           for dir in apps/*/; do
             app="$(basename "$dir")"
+            # Skip stray directories: a dir without a package.json is not an app,
+            # and jq would emit an empty platforms string for it.
+            [ -f "${dir}package.json" ] || continue
             if [ "$ALL" = "1" ] || echo "$CHANGED" | grep -q "^apps/${app}/"; then
               platforms="$(jq -r '.docker.platforms // "linux/amd64"' "${dir}package.json")"
               MATRIX="$(echo "$MATRIX" | jq -c \
