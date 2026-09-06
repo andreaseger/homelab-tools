@@ -62,7 +62,7 @@ async function createServer() {
     group: string,
     version: string,
     namespace: string,
-    plural: string,
+    plural: string
   ): Promise<T[]> {
     try {
       const response = (await k8sCustomApi.listNamespacedCustomObject({
@@ -84,7 +84,7 @@ async function createServer() {
       'image.toolkit.fluxcd.io',
       'v1beta2',
       'flux-system',
-      'imagepolicies',
+      'imagepolicies'
     );
     for (const policy of imagePolicies) {
       if (
@@ -117,13 +117,13 @@ async function createServer() {
         ? Math.floor(
             (new Date().getTime() -
               new Date(pod.metadata.creationTimestamp).getTime()) /
-              1000,
+              1000
           )
         : 0;
       const restartCount = pod.status.containerStatuses
         ? pod.status.containerStatuses.reduce(
             (acc, status) => acc + status.restartCount,
-            0,
+            0
           )
         : 0;
 
@@ -190,7 +190,7 @@ async function createServer() {
       'source.toolkit.fluxcd.io',
       'v1',
       'flux-system',
-      'helmrepositories',
+      'helmrepositories'
     );
     for (const repo of helmRepositories) {
       helmRepositoriesMap.set(repo.metadata.name, repo.spec.url);
@@ -201,7 +201,7 @@ async function createServer() {
       'source.toolkit.fluxcd.io',
       'v1beta2',
       'flux-system',
-      'helmcharts',
+      'helmcharts'
     );
     for (const chart of helmChartList) {
       helmCharts.push({
@@ -265,7 +265,9 @@ async function createServer() {
 
   app.listen(port, () => {
     console.log(
-      `Server is running at http://${process.env.VITE_HOST || 'localhost'}:${port}`,
+      `Server is running at http://${
+        process.env.VITE_HOST || 'localhost'
+      }:${port}`
     );
   });
 }

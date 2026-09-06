@@ -12,18 +12,9 @@
       </tr>
     </thead>
     <tbody>
-      <tr
-        v-for="(item, index) in sortedData"
-        :key="index"
-      >
-        <td
-          v-for="header in headers"
-          :key="header.key"
-        >
-          <slot
-            :name="header.key"
-            :item="item"
-          >
+      <tr v-for="(item, index) in sortedData" :key="index">
+        <td v-for="header in headers" :key="header.key">
+          <slot :name="header.key" :item="item">
             {{ item[header.key] }}
           </slot>
         </td>

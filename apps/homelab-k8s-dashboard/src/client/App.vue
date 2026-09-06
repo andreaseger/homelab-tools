@@ -17,10 +17,7 @@
           "
         >
           {{ item.tag }}
-          <span
-            v-if="item.newer_image_available"
-            class="update-icon"
-          >🚀</span>
+          <span v-if="item.newer_image_available" class="update-icon">🚀</span>
         </span>
       </template>
       <template #namespaces="{ item }">
@@ -31,17 +28,13 @@
       </template>
       <template #oldest_pod_age="{ item }">
         {{ formatAge(item.oldest_pod_age) }}
-        <span
-          v-if="isOld(item.oldest_pod_age)"
-          class="age-icon"
-        >🕰️</span>
+        <span v-if="isOld(item.oldest_pod_age)" class="age-icon">🕰️</span>
       </template>
       <template #total_restarts="{ item }">
         {{ item.total_restarts }}
-        <span
-          v-if="hasManyRestarts(item.total_restarts)"
-          class="restarts-icon"
-        >🔥</span>
+        <span v-if="hasManyRestarts(item.total_restarts)" class="restarts-icon"
+          >🔥</span
+        >
       </template>
     </DataTable>
     <div class="controls">
@@ -61,10 +54,7 @@
       default-sort-key="chart"
     >
       <template #repository_url="{ item }">
-        <a
-          :href="item.repository_url"
-          target="_blank"
-        >{{
+        <a :href="item.repository_url" target="_blank">{{
           item.repository_url
         }}</a>
       </template>
@@ -150,9 +140,7 @@ export default defineComponent({
       }
       return images.value.filter(
         (image) =>
-          !image.namespaces.every((ns) =>
-            excludedNamespaces.value.includes(ns),
-          ),
+          !image.namespaces.every((ns) => excludedNamespaces.value.includes(ns))
       );
     });
 

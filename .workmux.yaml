@@ -119,7 +119,7 @@ agent: claude
 # Use "<global>" to inherit from global config.
 # Set to empty list to disable: `post_create: []`
 post_create:
-  - "<global>"
+  - '<global>'
   - pnpm install
 
 # Commands to run before merging (e.g., linting, tests).
@@ -167,7 +167,6 @@ post_create:
 files:
   symlink:
     - .env
-
 #-------------------------------------------------------------------------------
 # Dashboard
 #-------------------------------------------------------------------------------
