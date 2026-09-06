@@ -1,86 +1,88 @@
 # Homelab Tools
 
-A monorepo of containerized applications and utilities for homelab infrastructure management.
+Containerized applications for homelab infrastructure, kept in one git repo as
+**independent packages**.
 
-## Getting Started
+There is no pnpm workspace and no Nx. Each directory under `apps/` has its own
+`package.json`, `pnpm-lock.yaml`, `node_modules`, `tsconfig.json` and `Dockerfile`.
+Nothing is shared between apps except the CI workflow and `.tool-versions`, so
+updating one app never means touching another.
 
-This workspace uses [Nx](https://nx.dev) for task orchestration and [Bun](https://bun.sh) as the JavaScript runtime. PNPM is used for package management. Nx manages the project graph, task dependencies, and caching — there are no npm/pnpm workspaces. Each app maintains its own `pnpm-lock.yaml` and `node_modules`, keeping dependency trees independent and Docker builds self-contained.
+## Apps
+
+- **[homelab-k8s-dashboard](apps/homelab-k8s-dashboard)** — dashboard of deployed
+  container images and Helm charts (Vue 3 + Express 5, Node runtime)
+- **[api-portal](apps/api-portal)** — OpenAPI/AsyncAPI spec portal (React + Bun)
+- **[obsidian-syncer](apps/obsidian-syncer)** — headless Obsidian vault sync (Bun)
+
+## Prerequisites
+
+- [mise](https://mise.jdx.dev) — installs `node`, `bun` and `pnpm` at the versions
+  pinned in `.tool-versions`
+- [Docker](https://docker.com) for container builds
 
 ```sh
-# Install root tooling (nx, eslint, prettier, husky)
+mise install
+```
+
+## Working on an app
+
+Everything happens inside the app directory:
+
+```sh
+cd apps/<app>
+
 pnpm install
-
-# Install dependencies for a specific app
-cd apps/<app> && pnpm install
-
-# Run tasks
-pnpm nx run <project>:<target>
-
-# View project graph
-pnpm nx graph
+pnpm run typecheck
+pnpm run build          # apps that have a build step
+pnpm run dev
+pnpm run docker:build   # reads .tool-versions for the base image versions
 ```
 
-## Projects
-
-### Apps
-
-- **[homelab-k8s-dashboard](apps/homelab-k8s-dashboard)** - K8s dashboard showing deployed container images and Helm charts (Vue 3 + Express 5)
-- **[obsidian-syncer](apps/obsidian-syncer)** - Headless Obsidian vault sync service
-
-## Common Tasks
+The repo root carries only Prettier:
 
 ```sh
-# Type check all projects
-pnpm nx run-many -t typecheck
-
-# Build container images locally
-pnpm nx run <app>:docker:build
-
-# Run all lint checks
-pnpm nx run-many -t lint
-
-# Format code
-pnpm nx format
+pnpm install
+pnpm run format
 ```
 
-## CI/CD
+## Toolchain versions
 
-The workspace uses GitHub Actions for continuous integration with **Nx affected detection**.
+`.tool-versions` is the single source of truth for `node`, `bun` and `pnpm`.
 
-- **CI Pipeline**: `.github/workflows/ci.yml` - Runs tests and linting on affected projects
-- **Container Builds**: `.github/workflows/container-build.yml` - Builds and pushes only affected Docker images
+- CI installs the toolchain with `jdx/mise-action`, which reads the file directly.
+- Container images receive the versions as `NODE_VERSION` / `BUN_VERSION` /
+  `PNPM_VERSION` build args. The Dockerfiles declare these `ARG`s with **no defaults**,
+  so an unset arg fails the build instead of silently drifting from the repo.
+- pnpm is installed in the images with `npx get-pnpm ${PNPM_VERSION}`, not with
+  Corepack: the `node:26-slim` images no longer ship a `corepack` binary. `SHELL` must
+  be set for that command — `get-pnpm` exits 1 if it cannot infer a shell to write its
+  rc file into.
 
-### How Affected Detection Works
+## CI
 
-The workflows use [`nrwl/nx-set-shas`](https://github.com/nrwl/nx-set-shas) to track the last successful build on `main`. This ensures:
+`.github/workflows/ci.yml` is shared by every app and runs three jobs:
 
-- Only changed projects are built and tested
-- Efficient CI runs as your monorepo grows
-- No unnecessary container image builds
+1. **`changes`** — diffs against the PR base (or the previous push) and emits a matrix
+   of apps whose directory changed. Changes to `.github/workflows/**` or
+   `.tool-versions` select every app.
+2. **`verify`** — per changed app: `pnpm install --frozen-lockfile`, then
+   `pnpm run --if-present typecheck` and `pnpm run --if-present build`.
+3. **`build-and-push`** — per changed app: buildx to GHCR. Target platforms come from
+   the `docker.platforms` field in that app's `package.json`.
 
-## Development
+To add an app, create `apps/<app>/` with a `package.json` (including
+`docker.platforms`) and a `Dockerfile`. The workflow picks it up with no edits.
 
-### Prerequisites
-
-- [PNPM](https://pnpm.io) (for package management)
-- [Bun](https://bun.sh) (v1.3+) (as JavaScript runtime)
-- [Docker](https://docker.com) (for container builds)
-
-### Project Structure
+## Layout
 
 ```
 homelab-tools/
-├── apps/                  # Applications (each with own pnpm-lock.yaml)
+├── apps/
+│   ├── api-portal/            # own package.json + pnpm-lock.yaml + Dockerfile
 │   ├── homelab-k8s-dashboard/
 │   └── obsidian-syncer/
-├── .github/               # CI/CD workflows
-├── .husky/                # Pre-commit hooks (prettier + eslint)
-├── eslint.config.js       # Root ESLint flat config
-├── nx.json                # Nx workspace configuration
-└── package.json           # Root tooling deps (no workspaces)
+├── .github/workflows/ci.yml   # shared by all apps
+├── .tool-versions             # node / bun / pnpm — single source of truth
+└── package.json               # repo tooling only (Prettier)
 ```
-
-## Learn More
-
-- [Nx Documentation](https://nx.dev)
-- [Bun Documentation](https://bun.sh/docs)

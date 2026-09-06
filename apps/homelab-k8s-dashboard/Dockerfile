@@ -1,47 +1,59 @@
-# ---- Builder Stage ----
-FROM node:22-slim AS builder
+# Base image version comes from the repo's .tool-versions; CI and the local
+# `docker:build` script both read it and pass it in. No default on purpose —
+# an unset arg fails the build rather than silently drifting from the repo.
+ARG NODE_VERSION
+ARG PNPM_VERSION
 
-RUN corepack enable pnpm
-
+# ---- Production dependencies ----
+FROM node:${NODE_VERSION}-slim AS deps
+ARG PNPM_VERSION
+ENV PNPM_HOME=/usr/local/share/pnpm
+ENV PATH=$PNPM_HOME/bin:$PATH
+# pnpm's own installer, pinned to PNPM_VERSION. Not Corepack: node:26-slim no
+# longer ships that binary. SHELL/ENV are required — get-pnpm exits 1 when it
+# cannot infer a shell to write its rc file into.
+RUN SHELL="$(which sh)" ENV="$HOME/.shrc" npx --yes get-pnpm ${PNPM_VERSION}
 WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile --prod
 
-# Copy workspace config + all member manifests (required for --frozen-lockfile validation)
-COPY --from=workspace package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
-COPY --from=workspace apps/api-portal/package.json apps/api-portal/
-COPY --from=workspace apps/obsidian-syncer/package.json apps/obsidian-syncer/
-COPY --from=workspace apps/homelab-k8s-dashboard/package.json apps/homelab-k8s-dashboard/
+# ---- Builder ----
+FROM node:${NODE_VERSION}-slim AS builder
+ARG PNPM_VERSION
+ENV PNPM_HOME=/usr/local/share/pnpm
+ENV PATH=$PNPM_HOME/bin:$PATH
+# pnpm's own installer, pinned to PNPM_VERSION. Not Corepack: node:26-slim no
+# longer ships that binary. SHELL/ENV are required — get-pnpm exits 1 when it
+# cannot infer a shell to write its rc file into.
+RUN SHELL="$(which sh)" ENV="$HOME/.shrc" npx --yes get-pnpm ${PNPM_VERSION}
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY tsconfig.json tsconfig.client.json tsconfig.server.json tsconfig.node.json vite.config.ts ./
+COPY src ./src
+# Emits dist/server via tsc and bundles dist/client via Vite. No vue-tsc: the
+# client tsconfig inherits noEmit from @vue/tsconfig, so vue-tsc only ever
+# type-checked, which the `typecheck` script covers in CI.
+RUN pnpm run build
 
-# Install only this app's dependency closure — sibling apps' native deps are skipped
-# node-linker=isolated overrides .npmrc's workspace-wide hoisted setting so
-# --filter actually excludes sibling apps' deps; pnpm deploy below still
-# produces a flat node_modules for the Bun runtime stage.
-RUN pnpm install --filter=@apps/homelab-k8s-dashboard... --frozen-lockfile --config.node-linker=isolated
-
-COPY --from=workspace apps/homelab-k8s-dashboard/src apps/homelab-k8s-dashboard/src
-COPY --from=workspace apps/homelab-k8s-dashboard/tsconfig*.json apps/homelab-k8s-dashboard/
-COPY --from=workspace apps/homelab-k8s-dashboard/vite.config.ts apps/homelab-k8s-dashboard/
-
-# Type-check and emit server JS; bundle client with Vite. With isolated
-# node-linker, binaries live under the app's own node_modules/.bin.
-RUN pnpm --filter=@apps/homelab-k8s-dashboard exec vue-tsc --build \
- && pnpm --filter=@apps/homelab-k8s-dashboard exec vite build
-
-# Produce an isolated prod-only deploy bundle
-RUN pnpm deploy --filter=@apps/homelab-k8s-dashboard --prod /deploy
-
-# ---- Production Stage ----
-FROM oven/bun:1.3.13
+# ---- Production ----
+# Node, not Bun: this app uses no Bun-specific APIs, and @kubernetes/client-node
+# authenticates to the API server via a node-fetch https.Agent carrying the
+# in-cluster CA — an option Bun's native fetch ignores, which made every API
+# call fail with UNABLE_TO_VERIFY_LEAF_SIGNATURE.
+FROM node:${NODE_VERSION}-slim
 
 LABEL org.opencontainers.image.source="https://github.com/andreaseger/homelab-tools"
 LABEL org.opencontainers.image.description="K8s dashboard showing deployed container images and helm charts"
 
 WORKDIR /app
 
-COPY --from=builder /deploy/node_modules ./node_modules
-COPY --from=builder /app/apps/homelab-k8s-dashboard/dist ./dist
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
 
 ENV NODE_ENV=production
 
+USER node
 EXPOSE 8080
 
-CMD ["bun", "run", "dist/server/server.js"]
+CMD ["node", "dist/server/server.js"]

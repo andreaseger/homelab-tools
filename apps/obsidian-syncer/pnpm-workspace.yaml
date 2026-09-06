@@ -1,0 +1,9 @@
+# Standalone package — this file exists only as pnpm's settings home
+# (pnpm 11+ no longer reads the "pnpm" field in package.json).
+allowBuilds:
+  better-sqlite3: true
+
+# obsidian-headless pins better-sqlite3 12.6.2, which has no prebuild for Node 26
+# (ABI 147) and fails to compile from source. 13.x builds cleanly.
+overrides:
+  better-sqlite3: 13.0.3

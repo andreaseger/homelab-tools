@@ -1,5 +1,5 @@
 {
-  "name": "@ohoio/api-portal",
+  "name": "api-portal",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -18,6 +18,15 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/swagger-ui-react": "^5.18.0",
-    "typescript": "~5.9.2"
+    "bun-types": "^1.3.10",
+    "typescript": "~7.0.2"
+  },
+  "scripts": {
+    "dev": "SPECS_DIR=../../specs/ bun --hot server/index.ts",
+    "typecheck": "tsc --noEmit",
+    "docker:build": "docker build --build-arg PNPM_VERSION=$(awk '$1==\"pnpm\"{print $2}' ../../.tool-versions) --build-arg NODE_VERSION=$(awk '$1==\"node\"{print $2}' ../../.tool-versions) --build-arg BUN_VERSION=$(awk '$1==\"bun\"{print $2}' ../../.tool-versions) -t api-portal ."
+  },
+  "docker": {
+    "platforms": "linux/amd64,linux/arm64"
   }
 }
