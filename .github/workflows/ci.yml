@@ -7,15 +7,13 @@ on:
   pull_request:
 
 permissions:
-  actions: read
   contents: read
 
 env:
   REGISTRY: ghcr.io
 
 jobs:
-  ci:
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork != true
+  changes:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.matrix.outputs.matrix }}
@@ -34,81 +32,106 @@ jobs:
             HEAD_SHA="${{ github.sha }}"
             PR_NUM=""
           fi
-          SHORT_SHA="${HEAD_SHA:0:7}"
-          TS=$(date -u +%Y%m%d%H%M%S)
           {
             echo "head_sha=$HEAD_SHA"
-            echo "short_sha=$SHORT_SHA"
+            echo "short_sha=${HEAD_SHA:0:7}"
             echo "pr_number=$PR_NUM"
-            echo "timestamp=$TS"
+            echo "timestamp=$(date -u +%Y%m%d%H%M%S)"
           } >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ steps.ctx.outputs.head_sha }}
-          filter: tree:0
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@8912a9102ac27614460f54aedde9e1e7f9aec20d # v6.0.5
+      # Replaces `nx affected`: each app under apps/ is an independent package,
+      # so "changed" is just "did anything under apps/<app>/ change".
+      - name: Determine changed apps
+        id: matrix
+        env:
+          EVENT: ${{ github.event_name }}
+          HEAD_SHA: ${{ steps.ctx.outputs.head_sha }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
 
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version-file: .tool-versions
+          if [ "$EVENT" = "pull_request" ]; then
+            BASE="$PR_BASE"
+          else
+            BASE="$PUSH_BEFORE"
+          fi
+          # New branch, force-push or shallow history: fall back to the parent commit.
+          if [ -z "${BASE:-}" ] || ! git cat-file -e "${BASE}^{commit}" 2>/dev/null; then
+            BASE="$(git rev-parse --verify --quiet "${HEAD_SHA}^" || true)"
+          fi
 
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+          if [ -n "${BASE:-}" ]; then
+            CHANGED="$(git diff --name-only "$BASE" "$HEAD_SHA")"
+          else
+            CHANGED="$(git ls-files)"   # no usable base: treat everything as changed
+          fi
+          echo "Changed files:"; echo "$CHANGED" | sed 's/^/  /'
+
+          # Repo-wide files that affect how every app is built or shipped.
+          if echo "$CHANGED" | grep -qE '^(\.github/workflows/|\.tool-versions$)'; then
+            ALL=1
+          else
+            ALL=0
+          fi
+
+          MATRIX='[]'
+          for dir in apps/*/; do
+            app="$(basename "$dir")"
+            if [ "$ALL" = "1" ] || echo "$CHANGED" | grep -q "^apps/${app}/"; then
+              platforms="$(jq -r '.docker.platforms // "linux/amd64"' "${dir}package.json")"
+              MATRIX="$(echo "$MATRIX" | jq -c \
+                --arg app "$app" --arg platforms "$platforms" \
+                '. + [{app: $app, platforms: $platforms}]')"
+            fi
+          done
+
+          echo "matrix={\"include\":$MATRIX}" >> "$GITHUB_OUTPUT"
+          echo "Matrix: {\"include\":$MATRIX}"
+
+  verify:
+    needs: changes
+    if: needs.changes.outputs.matrix != '{"include":[]}'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.changes.outputs.matrix) }}
+    defaults:
+      run:
+        working-directory: apps/${{ matrix.app }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          node-version: 22
-          cache: pnpm
+          ref: ${{ needs.changes.outputs.head_sha }}
+
+      # Installs node, bun and pnpm at the versions pinned in .tool-versions.
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Set SHAs for affected detection
-        uses: nrwl/nx-set-shas@afb73a62d26e41464e9254689e1fd6122ee683c1 # v5.0.1
-        with:
-          gh-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: pnpm run --if-present typecheck
 
-      - name: Pin affected base to PR target branch
-        if: github.event_name == 'pull_request'
-        run: |
-          echo "NX_BASE=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_ENV"
-          echo "NX_HEAD=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_ENV"
-
-      - run: pnpm nx affected -t format lint test build typecheck e2e-ci
-
-      - name: Build matrix from affected apps
-        id: matrix
-        run: |
-          APPS=$(pnpm nx show projects --affected --withTarget docker:build --json 2>/dev/null || echo "[]")
-
-          # For each affected app, collect platform:* tags into a comma-separated platforms string
-          MATRIX="[]"
-          for app in $(echo "$APPS" | jq -r '.[]'); do
-            PROJECT=$(pnpm nx show project "$app" --json 2>/dev/null)
-            # Skip apps tagged with release:skip
-            if echo "$PROJECT" | jq -e '.tags // [] | index("release:skip")' > /dev/null; then continue; fi
-            PLATFORMS=$(echo "$PROJECT" \
-              | jq -r '.tags // [] | .[] | select(startswith("platform:")) | sub("^platform:"; "linux/")' \
-              | paste -sd,)
-            # Default to linux/amd64 if no platform tags are set
-            PLATFORMS="${PLATFORMS:-linux/amd64}"
-            MATRIX=$(echo "$MATRIX" | jq -c --arg app "$app" --arg platforms "$PLATFORMS" '. + [{app: $app, platforms: $platforms}]')
-          done
-
-          echo "matrix={\"include\":$MATRIX}" >> $GITHUB_OUTPUT
+      - run: pnpm run --if-present build
 
   build-and-push:
-    needs: ci
-    if: needs.ci.outputs.matrix != '{"include":[]}' && needs.ci.outputs.matrix != ''
+    needs: [changes, verify]
+    if: needs.changes.outputs.matrix != '{"include":[]}'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     strategy:
-      matrix: ${{ fromJson(needs.ci.outputs.matrix) }}
+      fail-fast: false
+      matrix: ${{ fromJson(needs.changes.outputs.matrix) }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ needs.ci.outputs.head_sha }}
+          ref: ${{ needs.changes.outputs.head_sha }}
 
       - name: Set up QEMU
         if: contains(matrix.platforms, 'arm64')
@@ -128,9 +151,9 @@ jobs:
         id: taglist
         env:
           EVENT: ${{ github.event_name }}
-          SHORT_SHA: ${{ needs.ci.outputs.short_sha }}
-          TS: ${{ needs.ci.outputs.timestamp }}
-          PR_NUM: ${{ needs.ci.outputs.pr_number }}
+          SHORT_SHA: ${{ needs.changes.outputs.short_sha }}
+          TS: ${{ needs.changes.outputs.timestamp }}
+          PR_NUM: ${{ needs.changes.outputs.pr_number }}
         run: |
           {
             echo "tags<<EOF"
@@ -149,6 +172,15 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Read tool versions
+        id: tools
+        run: |
+          {
+            echo "node=$(awk '$1=="node"{print $2}' .tool-versions)"
+            echo "bun=$(awk '$1=="bun"{print $2}' .tool-versions)"
+            echo "pnpm=$(awk '$1=="pnpm"{print $2}' .tool-versions)"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Generate Docker metadata
         id: meta
         uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
@@ -161,10 +193,13 @@ jobs:
         with:
           context: apps/${{ matrix.app }}
           file: apps/${{ matrix.app }}/Dockerfile
-          build-contexts: workspace=.
+          build-args: |
+            NODE_VERSION=${{ steps.tools.outputs.node }}
+            BUN_VERSION=${{ steps.tools.outputs.bun }}
+            PNPM_VERSION=${{ steps.tools.outputs.pnpm }}
           platforms: ${{ matrix.platforms }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
