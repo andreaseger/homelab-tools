@@ -94,6 +94,18 @@ jobs:
           echo "matrix={\"include\":$MATRIX}" >> "$GITHUB_OUTPUT"
           echo "Matrix: {\"include\":$MATRIX}"
 
+  # Repo-level, not per-app: Prettier is the one tool that lives at the root.
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm run format:check
+
   verify:
     needs: changes
     if: needs.changes.outputs.matrix != '{"include":[]}'
