@@ -32,8 +32,10 @@ interface TableHeader {
   text: string;
 }
 
-interface DataItem<T> {
-  [key: string]: T;
+type CellValue = string | number | boolean | string[] | null;
+
+interface DataItem {
+  [key: string]: CellValue;
 }
 
 export default defineComponent({
@@ -44,7 +46,7 @@ export default defineComponent({
       required: true,
     },
     data: {
-      type: Array as PropType<DataItem<string | number | string[] | boolean>[]>,
+      type: Array as PropType<DataItem[]>,
       required: true,
     },
     defaultSortKey: {
@@ -72,6 +74,12 @@ export default defineComponent({
 
         const aComparable = Array.isArray(aValue) ? aValue.join(', ') : aValue;
         const bComparable = Array.isArray(bValue) ? bValue.join(', ') : bValue;
+
+        // Missing values sort last regardless of direction.
+        if (aComparable === null || bComparable === null) {
+          if (aComparable === bComparable) return 0;
+          return aComparable === null ? 1 : -1;
+        }
 
         if (aComparable < bComparable) {
           return sortOrder.value === 'asc' ? -1 : 1;

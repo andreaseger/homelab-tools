@@ -20,6 +20,24 @@
           <span v-if="item.newer_image_available" class="update-icon">🚀</span>
         </span>
       </template>
+      <template #latest_tag="{ item }">
+        <span v-if="item.latest_tag" :title="latestSourceLabel(item)">
+          {{ item.latest_tag }}
+        </span>
+        <span v-else class="unknown" title="No latest version available"
+          >unknown</span
+        >
+      </template>
+      <template #versions_behind="{ item }">
+        <span v-if="item.versions_behind === null" class="unknown">—</span>
+        <span v-else-if="item.versions_behind === 0" class="up-to-date"
+          >up to date</span
+        >
+        <span v-else class="behind">
+          {{ item.versions_behind }}
+          {{ item.versions_behind === 1 ? 'release' : 'releases' }} behind
+        </span>
+      </template>
       <template #namespaces="{ item }">
         {{ item.namespaces.join(', ') }}
       </template>
@@ -73,6 +91,9 @@ interface ContainerImage {
   container_names: string[];
   newer_image_available: boolean;
   latest_image: string;
+  latest_tag: string;
+  versions_behind: number | null;
+  latest_source: 'imagepolicy' | 'registry' | '';
   oldest_pod_age: number;
   total_restarts: number;
 }
@@ -100,6 +121,8 @@ export default defineComponent({
     const imageHeaders = [
       { key: 'repository', text: 'Repository' },
       { key: 'tag', text: 'Tag' },
+      { key: 'latest_tag', text: 'Latest Tag' },
+      { key: 'versions_behind', text: 'Behind' },
       { key: 'namespaces', text: 'Namespaces' },
       { key: 'container_names', text: 'Container Names' },
       { key: 'oldest_pod_age', text: 'Oldest Pod Age' },
@@ -155,6 +178,16 @@ export default defineComponent({
       return seconds > 30 * 24 * 3600; // 30 days
     };
 
+    const latestSourceLabel = (image: ContainerImage) => {
+      if (image.latest_source === 'imagepolicy') {
+        return 'Reported by a Flux ImagePolicy';
+      }
+      if (image.latest_source === 'registry') {
+        return 'Newest comparable tag found in the container registry';
+      }
+      return '';
+    };
+
     const hasManyRestarts = (restarts: number) => {
       return restarts > 10;
     };
@@ -176,6 +209,7 @@ export default defineComponent({
       formatAge,
       isOld,
       hasManyRestarts,
+      latestSourceLabel,
       excludedNamespaces,
     };
   },
@@ -183,6 +217,15 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.unknown {
+  color: #586e75;
+}
+.behind {
+  color: #b58900;
+}
+.up-to-date {
+  color: #859900;
+}
 .update-icon,
 .age-icon,
 .restarts-icon {

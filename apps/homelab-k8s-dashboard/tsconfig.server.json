@@ -2,7 +2,9 @@
   "extends": "@tsconfig/node26/tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true
   },
   "include": ["src/server/*"],
   "exclude": ["dist"]

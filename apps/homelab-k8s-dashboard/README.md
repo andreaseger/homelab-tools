@@ -4,6 +4,33 @@ This project is a web application that displays a dashboard of all deployed cont
 
 It consists of a Node.js backend using Express.js and a Vue.js frontend.
 
+## Latest versions
+
+For every running container image the dashboard shows the newest available tag
+and how many releases the running tag is behind it:
+
+- If a Flux `ImagePolicy` named `<something>-latest` tracks the image, its
+  reported latest image wins.
+- Otherwise the tag list is read straight from the container registry over the
+  anonymous Docker Registry v2 API. Only tags following the same scheme as the
+  running one are considered (same `v` prefix, same number of numeric
+  components, same variant suffix), so `1.2.3-alpine` is compared against
+  `1.4.0-alpine` and never against `2.0.0-rc1`.
+
+Images with a non-numeric tag (`latest`, `stable`), digest-pinned images and
+images in registries that need authentication show up as `unknown`.
+
+## Configuration
+
+| Variable              | Default | Description                                            |
+| --------------------- | ------- | ------------------------------------------------------ |
+| `PORT`                | `8080`  | HTTP port.                                             |
+| `EXCLUDED_NAMESPACES` | -       | Comma separated namespaces hidden behind a toggle.     |
+| `CACHE_TTL`           | `300`   | Seconds the API responses are cached.                  |
+| `REGISTRY_CACHE_TTL`  | `3600`  | Seconds registry tag listings are cached.              |
+| `REGISTRY_LOOKUP`     | `true`  | Set to `false` to disable outbound registry lookups.   |
+| `REGISTRY_TIMEOUT`    | `8000`  | Timeout in milliseconds for a single registry request. |
+
 ## Project Structure
 
 - `src/server/`: The Express.js backend application.
