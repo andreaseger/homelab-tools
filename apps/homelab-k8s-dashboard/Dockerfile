@@ -37,10 +37,11 @@ COPY src ./src
 RUN pnpm run build
 
 # ---- Production ----
-# Node, not Bun: this app uses no Bun-specific APIs, and @kubernetes/client-node
-# authenticates to the API server via a node-fetch https.Agent carrying the
-# in-cluster CA — an option Bun's native fetch ignores, which made every API
-# call fail with UNABLE_TO_VERIFY_LEAF_SIGNATURE.
+# This app has to run on Node. @kubernetes/client-node authenticates to the API
+# server through a node-fetch https.Agent carrying the in-cluster CA, and Bun's
+# native fetch silently ignores the `agent` option, so under Bun the CA is never
+# applied and every API call fails with UNABLE_TO_VERIFY_LEAF_SIGNATURE.
+# Do not switch this to a Bun base image.
 FROM node:${NODE_VERSION}-slim
 
 LABEL org.opencontainers.image.source="https://github.com/andreaseger/homelab-tools"

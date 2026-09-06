@@ -121,7 +121,7 @@ jobs:
         with:
           ref: ${{ needs.changes.outputs.head_sha }}
 
-      # Installs node, bun and pnpm at the versions pinned in .tool-versions.
+      # Installs node and pnpm at the versions pinned in .tool-versions.
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
 
       - run: pnpm install --frozen-lockfile
@@ -189,7 +189,6 @@ jobs:
         run: |
           {
             echo "node=$(awk '$1=="node"{print $2}' .tool-versions)"
-            echo "bun=$(awk '$1=="bun"{print $2}' .tool-versions)"
             echo "pnpm=$(awk '$1=="pnpm"{print $2}' .tool-versions)"
           } >> "$GITHUB_OUTPUT"
 
@@ -207,7 +206,6 @@ jobs:
           file: apps/${{ matrix.app }}/Dockerfile
           build-args: |
             NODE_VERSION=${{ steps.tools.outputs.node }}
-            BUN_VERSION=${{ steps.tools.outputs.bun }}
             PNPM_VERSION=${{ steps.tools.outputs.pnpm }}
           platforms: ${{ matrix.platforms }}
           push: true

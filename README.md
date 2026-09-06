@@ -15,7 +15,7 @@ updating one app never means touching another.
 
 ## Prerequisites
 
-- [mise](https://mise.jdx.dev) — installs `node`, `bun` and `pnpm` at the versions
+- [mise](https://mise.jdx.dev) — installs `node` and `pnpm` at the versions
   pinned in `.tool-versions`
 - [Docker](https://docker.com) for container builds
 
@@ -46,12 +46,12 @@ pnpm run format
 
 ## Toolchain versions
 
-`.tool-versions` is the single source of truth for `node`, `bun` and `pnpm`.
+`.tool-versions` is the single source of truth for `node` and `pnpm`.
 
 - CI installs the toolchain with `jdx/mise-action`, which reads the file directly.
-- Container images receive the versions as `NODE_VERSION` / `BUN_VERSION` /
-  `PNPM_VERSION` build args. The Dockerfiles declare these `ARG`s with **no defaults**,
-  so an unset arg fails the build instead of silently drifting from the repo.
+- Container images receive the versions as `NODE_VERSION` / `PNPM_VERSION` build
+  args. The Dockerfiles declare these `ARG`s with **no defaults**, so an unset arg
+  fails the build instead of silently drifting from the repo.
 - pnpm is installed in the images with `npx get-pnpm ${PNPM_VERSION}`, not with
   Corepack: the `node:26-slim` images no longer ship a `corepack` binary. `SHELL` must
   be set for that command — `get-pnpm` exits 1 if it cannot infer a shell to write its
@@ -79,6 +79,6 @@ homelab-tools/
 ├── apps/
 │   └── homelab-k8s-dashboard/  # own package.json + pnpm-lock.yaml + Dockerfile
 ├── .github/workflows/ci.yml   # shared by all apps
-├── .tool-versions             # node / bun / pnpm — single source of truth
+├── .tool-versions             # node / pnpm — single source of truth
 └── package.json               # repo tooling only (Prettier)
 ```
