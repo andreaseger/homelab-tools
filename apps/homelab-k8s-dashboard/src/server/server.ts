@@ -5,6 +5,8 @@ import { createCache } from 'cache-manager';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import { getLatestTag } from './registry.ts';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -13,7 +15,12 @@ interface ImagePolicy {
     name: string;
   };
   status?: {
+    /** Removed in newer Flux releases in favour of `latestRef`. */
     latestImage?: string;
+    latestRef?: {
+      name: string;
+      tag: string;
+    };
   };
 }
 
@@ -44,6 +51,37 @@ interface HelmRepository {
   };
 }
 
+interface ContainerImage {
+  repository: string;
+  tag: string;
+  namespaces: string[];
+  container_names: string[];
+  newer_image_available: boolean;
+  latest_image: string;
+  latest_tag: string;
+  versions_behind: number | null;
+  latest_source: 'imagepolicy' | 'registry' | '';
+  oldest_pod_age: number;
+  total_restarts: number;
+}
+
+/** Runs `worker` over `items`, keeping at most `limit` calls in flight. */
+async function mapWithConcurrency<T>(
+  items: T[],
+  limit: number,
+  worker: (item: T) => Promise<void>
+): Promise<void> {
+  const queue = [...items];
+  const runners = Array.from({ length: Math.min(limit, queue.length) }, () =>
+    (async () => {
+      for (let item = queue.shift(); item; item = queue.shift()) {
+        await worker(item);
+      }
+    })()
+  );
+  await Promise.all(runners);
+}
+
 async function createServer() {
   const app = express();
   const port = parseInt(process.env.PORT || '8080');
@@ -51,6 +89,12 @@ async function createServer() {
   const cache = createCache({
     ttl: parseInt(process.env.CACHE_TTL || '300') * 1000,
   });
+  // Registry tag listings change rarely and are the slow part of a refresh, so
+  // they get their own, much longer lived cache.
+  const registryCache = createCache({
+    ttl: parseInt(process.env.REGISTRY_CACHE_TTL || '3600') * 1000,
+  });
+  const registryLookupEnabled = process.env.REGISTRY_LOOKUP !== 'false';
 
   const kc = new k8s.KubeConfig();
   kc.loadFromDefault();
@@ -58,46 +102,128 @@ async function createServer() {
   const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
   const k8sCustomApi = kc.makeApiClient(k8s.CustomObjectsApi);
 
+  /**
+   * Remembers which API version actually served a resource, so we pay the
+   * fallback probing cost only once per process.
+   */
+  const servedVersions = new Map<string, string>();
+
+  /**
+   * Lists a custom resource, trying each candidate API version in turn. Flux
+   * promotes and later removes API versions (HelmChart went v1beta2 -> v1),
+   * which otherwise surfaces as a bare 404 from the API server.
+   */
   async function listCustomObjects<T>(
     group: string,
-    version: string,
+    versions: string[],
     namespace: string,
     plural: string
   ): Promise<T[]> {
-    try {
-      const response = (await k8sCustomApi.listNamespacedCustomObject({
-        group,
-        version,
-        namespace,
-        plural,
-      })) as { items: T[] };
-      return response.items || [];
-    } catch (error) {
-      console.error(`Failed to fetch ${plural}:`, error);
-      return [];
+    const key = `${group}/${plural}`;
+    const remembered = servedVersions.get(key);
+    const candidates = remembered
+      ? [remembered, ...versions.filter((version) => version !== remembered)]
+      : versions;
+
+    for (const version of candidates) {
+      try {
+        const response = (await k8sCustomApi.listNamespacedCustomObject({
+          group,
+          version,
+          namespace,
+          plural,
+        })) as { items: T[] };
+        servedVersions.set(key, version);
+        return response.items || [];
+      } catch (error) {
+        if ((error as { code?: number }).code === 404) {
+          continue;
+        }
+        console.error(`Failed to fetch ${plural}:`, error);
+        return [];
+      }
     }
+
+    console.error(
+      `Failed to fetch ${plural}: none of the API versions ${candidates.join(
+        ', '
+      )} are served by ${group}`
+    );
+    return [];
   }
 
   async function getLatestImages(): Promise<Map<string, string>> {
-    const latestImages = new Map();
+    const latestImages = new Map<string, string>();
     const imagePolicies = await listCustomObjects<ImagePolicy>(
       'image.toolkit.fluxcd.io',
-      'v1beta2',
+      ['v1beta2', 'v1', 'v1beta1'],
       'flux-system',
       'imagepolicies'
     );
     for (const policy of imagePolicies) {
-      if (
-        policy.metadata.name.endsWith('-latest') &&
-        policy.status &&
-        policy.status.latestImage
-      ) {
-        const latestImage = policy.status.latestImage;
+      const latestRef = policy.status?.latestRef;
+      const latestImage =
+        policy.status?.latestImage ??
+        (latestRef ? `${latestRef.name}:${latestRef.tag}` : undefined);
+      if (policy.metadata.name.endsWith('-latest') && latestImage) {
         const repository = latestImage.split(':')[0];
         latestImages.set(repository, latestImage);
       }
     }
     return latestImages;
+  }
+
+  /**
+   * Fills in the newest available tag for every image. Flux ImagePolicies are
+   * authoritative where they exist; everything else is looked up straight in
+   * the container registry so untracked images still show how far behind they
+   * are.
+   */
+  async function addLatestVersions(
+    images: ContainerImage[],
+    latestImages: Map<string, string>
+  ): Promise<void> {
+    for (const image of images) {
+      const latestImage = latestImages.get(image.repository);
+      if (!latestImage) {
+        continue;
+      }
+      image.latest_image = latestImage;
+      image.latest_tag = latestImage.split(':').slice(1).join(':');
+      image.latest_source = 'imagepolicy';
+      image.newer_image_available =
+        latestImage !== `${image.repository}:${image.tag}`;
+    }
+
+    if (!registryLookupEnabled) {
+      return;
+    }
+
+    const unresolved = images.filter((image) => !image.latest_source);
+    await mapWithConcurrency(unresolved, 5, async (image) => {
+      const imageFull = `${image.repository}:${image.tag}`;
+      try {
+        const cacheKey = `registry:${imageFull}`;
+        let latest = await registryCache.get<{
+          latest_tag: string;
+          versions_behind: number;
+        } | null>(cacheKey);
+        if (latest === null || latest === undefined) {
+          latest = await getLatestTag(imageFull);
+          await registryCache.set(cacheKey, latest);
+        }
+        if (!latest) {
+          return;
+        }
+        image.latest_tag = latest.latest_tag;
+        image.latest_image = `${image.repository}:${latest.latest_tag}`;
+        image.versions_behind = latest.versions_behind;
+        image.latest_source = 'registry';
+        image.newer_image_available = latest.latest_tag !== image.tag;
+      } catch (error) {
+        console.error(`Failed to look up latest tag for ${imageFull}:`, error);
+      }
+    });
   }
 
   async function fetchContainerImages() {
@@ -106,7 +232,7 @@ async function createServer() {
       .filter(Boolean);
     const latestImages = await getLatestImages();
     const pods = await k8sApi.listPodForAllNamespaces();
-    const imagesMap = new Map();
+    const imagesMap = new Map<string, ContainerImage>();
 
     for (const pod of pods.items) {
       if (pod.status?.phase !== 'Running' || !pod.spec || !pod.metadata) {
@@ -141,35 +267,28 @@ async function createServer() {
         }
         const imageIdentifier = `${repository}:${tag}`;
 
-        let newer_image_available = false;
-        let latest_image = '';
-        if (latestImages.has(repository)) {
-          const latestImage = latestImages.get(repository);
-          if (latestImage && latestImage !== imageFull) {
-            newer_image_available = true;
-            latest_image = latestImage;
-          }
-        }
-
-        if (!imagesMap.has(imageIdentifier)) {
-          imagesMap.set(imageIdentifier, {
+        let image = imagesMap.get(imageIdentifier);
+        if (!image) {
+          image = {
             repository,
             tag,
             namespaces: [],
             container_names: [],
-            newer_image_available,
-            latest_image,
+            newer_image_available: false,
+            latest_image: '',
+            latest_tag: '',
+            versions_behind: null,
+            latest_source: '',
             oldest_pod_age: podAge,
             total_restarts: restartCount,
-          });
+          };
+          imagesMap.set(imageIdentifier, image);
         } else {
-          const image = imagesMap.get(imageIdentifier);
           if (podAge > image.oldest_pod_age) {
             image.oldest_pod_age = podAge;
           }
           image.total_restarts += restartCount;
         }
-        const image = imagesMap.get(imageIdentifier);
         if (pod.metadata.namespace) {
           image.namespaces.push(pod.metadata.namespace);
         }
@@ -177,6 +296,7 @@ async function createServer() {
       }
     }
     const images = Array.from(imagesMap.values());
+    await addLatestVersions(images, latestImages);
     return {
       images,
       last_updated: Date.now(),
@@ -188,7 +308,7 @@ async function createServer() {
     const helmRepositoriesMap = new Map();
     const helmRepositories = await listCustomObjects<HelmRepository>(
       'source.toolkit.fluxcd.io',
-      'v1',
+      ['v1', 'v1beta2'],
       'flux-system',
       'helmrepositories'
     );
@@ -199,7 +319,7 @@ async function createServer() {
     const helmCharts = [];
     const helmChartList = await listCustomObjects<HelmChartCR>(
       'source.toolkit.fluxcd.io',
-      'v1beta2',
+      ['v1', 'v1beta2'],
       'flux-system',
       'helmcharts'
     );

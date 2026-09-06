@@ -33,6 +33,11 @@ spec:
               value: 'kube-system'
             - name: CACHE_TTL
               value: '300'
+            # Registry tag lookups fill in the latest version for images that
+            # no Flux ImagePolicy tracks. Set REGISTRY_LOOKUP to 'false' to
+            # disable the outbound calls.
+            - name: REGISTRY_CACHE_TTL
+              value: '3600'
             - name: PORT
               value: '8080'
             - name: VITE_HOST
