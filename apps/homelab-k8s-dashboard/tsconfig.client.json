@@ -9,9 +9,7 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true,
-    "outDir": "./dist",
-    "rootDir": "./src"
+    "noUncheckedSideEffectImports": true
   },
   "include": ["src/client/*.ts", "src/client/*.tsx", "src/client/*.vue"]
 }

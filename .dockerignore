@@ -1,9 +1,0 @@
-.git
-.github
-.nx
-.opencode
-node_modules
-**/node_modules
-dist
-tmp
-*.md

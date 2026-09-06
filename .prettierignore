@@ -1,5 +1,6 @@
-# Add files here to ignore them from prettier formatting
-/dist
-/coverage
-/.nx/cache
-/.nx/workspace-data
+# Build output and lockfiles, at any depth (apps/*/dist after the monorepo split).
+dist/
+coverage/
+node_modules/
+*.tsbuildinfo
+pnpm-lock.yaml
